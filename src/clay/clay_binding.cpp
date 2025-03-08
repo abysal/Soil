@@ -101,94 +101,100 @@ void render_loop(
 }
 
 namespace clay_extension {
-bool ButtonConfig::render_button(
-    std::string_view text, Clay_ElementId id,
-    std::optional<std::function<void(const ButtonConfig &, std::string_view)>>
-        &&callback, bool bare 
-) const noexcept {
-    const auto hovered = this->is_hovered(id);
-    const auto config = this->create_decleration(hovered, id);
+    bool ButtonConfig::render_button(
+        std::string_view text, Clay_ElementId id,
+        std::optional<
+            std::function<void(const ButtonConfig &, std::string_view)>>
+            &&callback,
+        bool  bare
+    ) const noexcept {
+        const auto hovered = this->is_hovered(id);
+        const auto config  = this->create_decleration(hovered, id);
 
-    const auto func = [&] {
-        CLAY_TEXT(
-            to_clay(text),
-            CLAY_TEXT_CONFIG(
-                {.textColor = this->text_color, .fontSize = this->font_size}
-            )
-        );
+        const auto func = [&] {
+            CLAY_TEXT(
+                to_clay(text),
+                CLAY_TEXT_CONFIG(
+                    {.textColor = this->text_color, .fontSize = this->font_size}
+                )
+            );
 
-        if (callback.has_value())
-            callback.value()(*this, text);
+            if (callback.has_value())
+                callback.value()(*this, text);
         };
 
-    if (!bare) {
-        new_element(config, func);
-    } else {
-        func();
+        if (!bare) {
+            new_element(config, func);
+        } else {
+            func();
+        }
+
+        return hovered && IsMouseButtonPressed(0);
     }
 
-    return hovered && IsMouseButtonPressed(0);
-}
+    Clay_ElementDeclaration ButtonConfig::create_decleration(
+        bool hovered, const Clay_ElementId &id
+    ) const noexcept {
 
-    Clay_ElementDeclaration ButtonConfig::create_decleration(bool hovered, const Clay_ElementId& id) const noexcept {
+        const soil::Color color =
+            (hovered)
+                ? this->background_color * (this->hover_light_amount + 1.0f)
+                : this->background_color;
 
-    const soil::Color color =
-        (hovered) ? this->background_color * (this->hover_light_amount + 1.0f)
-                  : this->background_color;
+        const Clay_SizingMinMax min_max_x = {
+            .min = static_cast<f32>(this->min_size.x), .max = 21932810932.f
+        };
 
-    const Clay_SizingMinMax min_max_x = {
-        .min = static_cast<f32>(this->min_size.x), .max = 21932810932.f
-    };
+        const Clay_SizingMinMax min_max_y = {
+            .min = static_cast<f32>(this->min_size.y), .max = 21932810932.f
+        };
 
-    const Clay_SizingMinMax min_max_y = {
-        .min = static_cast<f32>(this->min_size.y), .max = 21932810932.f
-    };
+        const Clay_ElementDeclaration config = {
+            .id = id,
+            .layout{
+                .sizing{
+                    .width  = CLAY_SIZING_FIT(min_max_x),
+                    .height = CLAY_SIZING_FIT(min_max_y),
 
-    const Clay_ElementDeclaration config = {
-        .id = id,
-        .layout{
-            .sizing{
-                .width  = CLAY_SIZING_FIT(min_max_x),
-                .height = CLAY_SIZING_FIT(min_max_y),
-
+                },
+                .padding = CLAY_PADDING_ALL(this->text_padding)
             },
-            .padding = CLAY_PADDING_ALL(this->text_padding)
-        },
-        .backgroundColor = color,
-        .cornerRadius =
-            {this->rounding, this->rounding, this->rounding, this->rounding},
-    };
+            .backgroundColor = color,
+            .cornerRadius =
+                {this->rounding, this->rounding, this->rounding, this->rounding
+                },
+        };
 
-    return config;
-}
+        return config;
+    }
 
-// bool ButtonConfig::render_button_bare(
-//     std::string_view text, Clay_ElementId id,
-//     std::optional<
-//         std::function<void(const ButtonConfig &, std::string_view)>>
-//         &&callback
-// ) const noexcept {
-//     bool hovered = Clay_PointerOver(id);
+    // bool ButtonConfig::render_button_bare(
+    //     std::string_view text, Clay_ElementId id,
+    //     std::optional<
+    //         std::function<void(const ButtonConfig &, std::string_view)>>
+    //         &&callback
+    // ) const noexcept {
+    //     bool hovered = Clay_PointerOver(id);
 
-//     CLAY_TEXT(
-//         to_clay(text),
-//         CLAY_TEXT_CONFIG(
-//             {.textColor = this->text_color, .fontSize = this->font_size}
-//         )
-//     );
+    //     CLAY_TEXT(
+    //         to_clay(text),
+    //         CLAY_TEXT_CONFIG(
+    //             {.textColor = this->text_color, .fontSize = this->font_size}
+    //         )
+    //     );
 
-//     if (callback.has_value())
-//         callback.value()(*this, text);
+    //     if (callback.has_value())
+    //         callback.value()(*this, text);
 
-//     return hovered && IsMouseButtonPressed(0);
-// }
+    //     return hovered && IsMouseButtonPressed(0);
+    // }
 
-void new_element(
-    Clay_ElementDeclaration declaration, std::function<void()> &&inner
-) noexcept {
-    Clay__OpenElement();
-    Clay__ConfigureOpenElement(declaration);
-    inner();
-    Clay__CloseElement();
-}
+    void new_element(
+        Clay_ElementDeclaration declaration, std::function<void()> &&inner
+    ) noexcept {
+        Clay__OpenElement();
+        Clay__ConfigureOpenElement(declaration);
+        inner();
+        Clay__CloseElement();
+    }
 } // namespace clay_extension

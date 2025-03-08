@@ -7,10 +7,10 @@
 #include <algorithm>
 #include <clay.h>
 #include <stdexcept>
-#include <tuple>
-#include <variant>
 #include <string_view>
+#include <tuple>
 #include <type_traits>
+#include <variant>
 
 using u8  = unsigned char;
 using i8  = char;
@@ -51,167 +51,175 @@ using f32 = float;
 using f64 = double;
 
 namespace soil {
-template <typename T> struct Vector2Base {
-    T x;
-    T y;
-};
-
-template <typename T> struct Vector3Base {
-    T x;
-    T y;
-};
-
-template <typename T> struct Vector4Base {
-    T x;
-    T y;
-    T z;
-    T w;
-
-    template <typename Self, typename U>
-    constexpr Self operator*(this const Self &self, U v) noexcept {
-        if constexpr (std::is_floating_point<U>::value) {
-            return {
-                static_cast<T>(std::clamp(
-                    static_cast<U>(self.x) * v,
-                    static_cast<U>(std::numeric_limits<T>::min()),
-                    static_cast<U>(std::numeric_limits<T>::max())
-                )),
-                static_cast<T>(std::clamp(
-                    static_cast<U>(self.y) * v,
-                    static_cast<U>(std::numeric_limits<T>::min()),
-                    static_cast<U>(std::numeric_limits<T>::max())
-                )),
-                static_cast<T>(std::clamp(
-                    static_cast<U>(self.z) * v,
-                    static_cast<U>(std::numeric_limits<T>::min()),
-                    static_cast<U>(std::numeric_limits<T>::max())
-                )),
-                static_cast<T>(std::clamp(
-                    static_cast<U>(self.w) * v,
-                    static_cast<U>(std::numeric_limits<T>::min()),
-                    static_cast<U>(std::numeric_limits<T>::max())
-                ))
-            };
-        } else {
-            return {
-                static_cast<T>(std::clamp(
-                    self.x * static_cast<T>(v), std::numeric_limits<T>::min(),
-                    std::numeric_limits<T>::max()
-                )),
-                static_cast<T>(std::clamp(
-                    self.y * static_cast<T>(v), std::numeric_limits<T>::min(),
-                    std::numeric_limits<T>::max()
-                )),
-                static_cast<T>(std::clamp(
-                    self.z * static_cast<T>(v), std::numeric_limits<T>::min(),
-                    std::numeric_limits<T>::max()
-                )),
-                static_cast<T>(std::clamp(
-                    self.w * static_cast<T>(v), std::numeric_limits<T>::min(),
-                    std::numeric_limits<T>::max()
-                ))
-            };
-        }
-    }
-
-    template <typename Self>
-    constexpr bool operator==(this const Self &self, const Self &o) noexcept {
-        return self.x == o.x && self.y == o.y && self.z == o.z && self.w == o.w;
-    }
-};
-
-using Vec4i = Vector4Base<i32>;
-using Vec2i = Vector2Base<i32>;
-
-// Assumes that this is valid hex
-template <std::integral T> constexpr T from_hex(std::string_view str) noexcept {
-
-    const auto char_conv = [](const char c) {
-        return (c >= '0' && c <= '9')   ? (c - '0')
-               : (c >= 'A' && c <= 'F') ? (c - 'A' + 10)
-               : (c >= 'a' && c <= 'f') ? (c - 'a' + 10)
-                                        : -1;
+    template <typename T> struct Vector2Base {
+        T x;
+        T y;
     };
 
-    T out{0};
+    template <typename T> struct Vector3Base {
+        T x;
+        T y;
+    };
 
-    for (const char c : str) {
-        out <<= 4;
-        out  |= char_conv(c);
-    }
+    template <typename T> struct Vector4Base {
+        T x;
+        T y;
+        T z;
+        T w;
 
-    return out;
-}
-
-static_assert(from_hex<i32>("FF") == 255, "Hex Conversion Failed");
-static_assert(from_hex<i32>("A1") == 161, "From Hex Failed");
-
-struct Color : public Vector4Base<u8> {
-    // NOLINTNEXTLINE
-    operator Clay_Color() const noexcept {
-        return {
-            static_cast<f32>(this->x), static_cast<f32>(this->y),
-            static_cast<f32>(this->z), static_cast<f32>(this->w)
-        };
-    }
-
-    constexpr Color(std::string_view color) {
-        if (color.length() > 9) {
-            throw std::invalid_argument("The color passed into the Color hex "
-                                        "decoder was not a valid hex code");
+        template <typename Self, typename U>
+        constexpr Self operator*(this const Self &self, U v) noexcept {
+            if constexpr (std::is_floating_point<U>::value) {
+                return {
+                    static_cast<T>(std::clamp(
+                        static_cast<U>(self.x) * v,
+                        static_cast<U>(std::numeric_limits<T>::min()),
+                        static_cast<U>(std::numeric_limits<T>::max())
+                    )),
+                    static_cast<T>(std::clamp(
+                        static_cast<U>(self.y) * v,
+                        static_cast<U>(std::numeric_limits<T>::min()),
+                        static_cast<U>(std::numeric_limits<T>::max())
+                    )),
+                    static_cast<T>(std::clamp(
+                        static_cast<U>(self.z) * v,
+                        static_cast<U>(std::numeric_limits<T>::min()),
+                        static_cast<U>(std::numeric_limits<T>::max())
+                    )),
+                    static_cast<T>(std::clamp(
+                        static_cast<U>(self.w) * v,
+                        static_cast<U>(std::numeric_limits<T>::min()),
+                        static_cast<U>(std::numeric_limits<T>::max())
+                    ))
+                };
+            } else {
+                return {
+                    static_cast<T>(std::clamp(
+                        self.x * static_cast<T>(v),
+                        std::numeric_limits<T>::min(),
+                        std::numeric_limits<T>::max()
+                    )),
+                    static_cast<T>(std::clamp(
+                        self.y * static_cast<T>(v),
+                        std::numeric_limits<T>::min(),
+                        std::numeric_limits<T>::max()
+                    )),
+                    static_cast<T>(std::clamp(
+                        self.z * static_cast<T>(v),
+                        std::numeric_limits<T>::min(),
+                        std::numeric_limits<T>::max()
+                    )),
+                    static_cast<T>(std::clamp(
+                        self.w * static_cast<T>(v),
+                        std::numeric_limits<T>::min(),
+                        std::numeric_limits<T>::max()
+                    ))
+                };
+            }
         }
 
-        if (color.starts_with('#')) {
-            color = color.substr(1);
+        template <typename Self>
+        constexpr bool
+        operator==(this const Self &self, const Self &o) noexcept {
+            return self.x == o.x && self.y == o.y && self.z == o.z &&
+                   self.w == o.w;
         }
+    };
 
-        const auto section = [&] {
-            const u8 out = from_hex<u8>(color.substr(0, 2));
+    using Vec4i = Vector4Base<i32>;
+    using Vec2i = Vector2Base<i32>;
 
-            color = color.substr(2);
+    // Assumes that this is valid hex
+    template <std::integral T>
+    constexpr T from_hex(std::string_view str) noexcept {
 
-            return out;
+        const auto char_conv = [](const char c) {
+            return (c >= '0' && c <= '9')   ? (c - '0')
+                   : (c >= 'A' && c <= 'F') ? (c - 'A' + 10)
+                   : (c >= 'a' && c <= 'f') ? (c - 'a' + 10)
+                                            : -1;
         };
 
-        this->x = section();
-        this->y = section();
-        this->z = section();
-        this->w = (color.length() == 0) ? 255 : section();
+        T out{0};
+
+        for (const char c : str) {
+            out <<= 4;
+            out  |= char_conv(c);
+        }
+
+        return out;
     }
 
-    constexpr Color(u8 red, u8 green, u8 blue, u8 alpha = 255) {
-        this->x = red;
-        this->y = green;
-        this->z = blue;
-        this->w = alpha;
-    }
-};
+    static_assert(from_hex<i32>("FF") == 255, "Hex Conversion Failed");
+    static_assert(from_hex<i32>("A1") == 161, "From Hex Failed");
 
-static_assert(
-    Color("FFFFFF") == Color{255, 255, 255, 255}, "Color Conversion Broken!"
-);
+    struct Color : public Vector4Base<u8> {
+        // NOLINTNEXTLINE
+        operator Clay_Color() const noexcept {
+            return {
+                static_cast<f32>(this->x), static_cast<f32>(this->y),
+                static_cast<f32>(this->z), static_cast<f32>(this->w)
+            };
+        }
 
-static_assert(
-    Color("#FFFFFFFF") == Color{255, 255, 255, 255}, "Color Conversion Broken!"
-);
-static_assert(
-    Color("FFFFFF00") == Color{255, 255, 255, 0}, "Color Conversion Broken!"
-);
-static_assert(
-    Color("FEFDFBFF") == Color{254, 253, 251, 255}, "Color Conversion Broken!"
-);
+        constexpr Color(std::string_view color) {
+            if (color.length() > 9) {
+                throw std::invalid_argument(
+                    "The color passed into the Color hex "
+                    "decoder was not a valid hex code"
+                );
+            }
 
-template <typename... StorageTypes> class DynamicVariant {
+            if (color.starts_with('#')) {
+                color = color.substr(1);
+            }
+
+            const auto section = [&] {
+                const u8 out = from_hex<u8>(color.substr(0, 2));
+
+                color = color.substr(2);
+
+                return out;
+            };
+
+            this->x = section();
+            this->y = section();
+            this->z = section();
+            this->w = (color.length() == 0) ? 255 : section();
+        }
+
+        constexpr Color(u8 red, u8 green, u8 blue, u8 alpha = 255) {
+            this->x = red;
+            this->y = green;
+            this->z = blue;
+            this->w = alpha;
+        }
+    };
+
+    static_assert(
+        Color("FFFFFF") == Color{255, 255, 255, 255}, "Color Conversion Broken!"
+    );
+
+    static_assert(
+        Color("#FFFFFFFF") == Color{255, 255, 255, 255},
+        "Color Conversion Broken!"
+    );
+    static_assert(
+        Color("FFFFFF00") == Color{255, 255, 255, 0}, "Color Conversion Broken!"
+    );
+    static_assert(
+        Color("FEFDFBFF") == Color{254, 253, 251, 255},
+        "Color Conversion Broken!"
+    );
+
+    template <typename... StorageTypes> class DynamicVariant {
     public:
-        template <typename T>
-        consteval auto add_type() const {
+        template <typename T> consteval auto add_type() const {
             return DynamicVariant<StorageTypes..., T>();
         }
-    
-        constexpr auto create_variant() const {
-            return variant_type();
-        }
-    
+
+        constexpr auto create_variant() const { return variant_type(); }
+
     private:
         using variant_type = std::variant<StorageTypes...>;
     };
@@ -219,17 +227,16 @@ template <typename... StorageTypes> class DynamicVariant {
 } // namespace soil
 
 namespace internal {
-using namespace soil;
-static inline void _compile_check() {
-    DynamicVariant<> variant;
+    using namespace soil;
+    static inline void _compile_check() {
+        DynamicVariant<> variant;
 
-    const auto var = variant.add_type<i32>()
-        .add_type<f32>()
-        .add_type<std::string_view>()
-        .add_type<f64>()
-        .create_variant();
-
-}
-}
+        const auto var = variant.add_type<i32>()
+                             .add_type<f32>()
+                             .add_type<std::string_view>()
+                             .add_type<f64>()
+                             .create_variant();
+    }
+} // namespace internal
 
 #endif // TYPES_HPP

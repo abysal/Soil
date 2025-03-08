@@ -49,3 +49,4 @@ SortIncludes: CaseSensitive
 # # SeparateDefinitionBlocks: Always
 # SortUsingDeclarations: LexicographicNumeric
 # Standard: Latest
+NamespaceIndentation: All

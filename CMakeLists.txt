@@ -11,6 +11,7 @@ add_executable(Soil
         src/clay/components/header.hpp
         src/types.hpp
         src/Application/Application.cpp
+        src/Application/ApplicationSidebar.cpp
         src/Application/Application.hpp
         src/Application/header_bar.hpp
         src/Application/editor_config.hpp

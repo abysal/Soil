@@ -2,7 +2,4 @@
 
 #include "./simple_ttf.hpp"
 
-
-namespace soil {
-
-}
+namespace soil {}
