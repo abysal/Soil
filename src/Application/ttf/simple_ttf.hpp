@@ -24,7 +24,7 @@ namespace soil {
             BinaryCursor<T, std::endian::big> cursor;
             const std::vector<TableEntry>    &tables;
 
-            std::optional<usize> jump_to_table_raw(u32 id) noexcept {
+            constexpr std::optional<usize> jump_to_table_raw(u32 id) noexcept {
                 const auto it = std::find_if(
                     this->tables.begin(), this->tables.end(),
                     [&](const TableEntry &table) { return table.tag == id; }
@@ -43,6 +43,24 @@ namespace soil {
         };
 
     public:
+
+        template <typename T>
+        constexpr TTF(const std::vector<TableEntry>      &tables,
+            BinaryCursor<T, std::endian::big> &&cursor) {
+            DeserContext<T> ctx = {.cursor = cursor, .tables = tables};
+
+            const auto length = ctx.jump_to_table_raw('maxp');
+
+            if (!length.has_value()) {
+                throw std::logic_error("Invalid TTF");
+            }
+
+            if (ctx.cursor.template get<u32>() != 0x00010000) {
+                throw std::logic_error("Missing header");
+            }
+
+            this->glyph_count = ctx.cursor.template get<u16>();
+        }
         // Parses a TTF file from some memory, assumes its valid data
         // Please call a validation function on this data
         constexpr static TTF from_data(const std::span<u8> data) noexcept {
@@ -69,24 +87,6 @@ namespace soil {
             }
 
             return TTF{tables, std::move(cursor)};
-        }
-
-        template <typename T>
-        TTF(const std::vector<TableEntry>      &tables,
-            BinaryCursor<T, std::endian::big> &&cursor) {
-            DeserContext<T> ctx = {.cursor = cursor, .tables = tables};
-
-            const auto length = ctx.jump_to_table_raw('maxp');
-
-            if (!length.has_value()) {
-                throw std::logic_error("Invalid TTF");
-            }
-
-            if (ctx.cursor.template get<u32>() != 0x00010000) {
-                throw std::logic_error("Missing header");
-            }
-
-            this->glyph_count = ctx.cursor.template get<u16>();
         }
 
         u16 glyphs_count() const noexcept { return this->glyph_count; }

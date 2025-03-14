@@ -42,7 +42,7 @@ namespace soil {
         usize               index = 0;
 
     public:
-        BinaryCursor(StorageBuffer &&buffer, usize starting_index = 0) noexcept
+        constexpr BinaryCursor(StorageBuffer &&buffer, usize starting_index = 0) noexcept
             : buffer(std::move(buffer)), index(starting_index) {};
 
         template <typename T>

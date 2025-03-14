@@ -2,6 +2,7 @@
 // Created by Akashi on 02/03/25.
 //
 #include "raylib.h"
+#include "types.hpp"
 #include <optional>
 #define CLAY_IMPLEMENTATION
 #define RAY_IMPLEMENTATION
@@ -11,6 +12,7 @@
 
 #include "../Application/jet_brains_mono.hpp"
 #include "../Application/ttf/simple_ttf.hpp"
+#include "./render.hpp"
 #include "./templates.hpp"
 #include "clay_renderer_raylib.c"
 #include <print>
@@ -20,10 +22,12 @@ static void log_handle_error(Clay_ErrorData data) {
 }
 
 std::unique_ptr<Font> setup_basics(const char *window_title) noexcept {
+    Clay_SetMaxElementCount(65535 * 32);
     Clay_Raylib_Initialize(
         512, 512, window_title,
         FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT | FLAG_WINDOW_MAXIMIZED
     );
+
 
     const i32 monitor = GetCurrentMonitor();
 
@@ -48,8 +52,8 @@ std::unique_ptr<Font> setup_basics(const char *window_title) noexcept {
     // The U8 cast is legal since we know the from_data call doesn't modify the
     // underlying data (it takes a const version) So there is no UB by writing
     // to the constant memory. This function call will also never fail since we
-    // know this TTF is valid
-    const soil::TTF file =
+    // know this TTF is valid. Also the fact this TTF file is entirely constexpr parsed is nuts
+    constexpr soil::TTF file =
         soil::TTF::from_data({const_cast<u8 *>(raw_hex.data()), raw_hex.size()}
         );
 
@@ -69,7 +73,8 @@ static void per_frame_clay_update() noexcept {
 
     const auto mouse = GetMousePosition();
 
-    const auto mouse_delta = GetMouseDelta();
+    auto mouse_scroll_delta = GetMouseWheelMoveV();
+    mouse_scroll_delta.y *= 100;
 
     Clay_SetLayoutDimensions({static_cast<f32>(width), static_cast<f32>(height)}
     );
@@ -79,7 +84,7 @@ static void per_frame_clay_update() noexcept {
     );
 
     Clay_UpdateScrollContainers(
-        true, std::bit_cast<Clay_Vector2>(mouse_delta), GetFrameTime()
+        true, std::bit_cast<Clay_Vector2>(mouse_scroll_delta), GetFrameTime()
     );
 }
 
@@ -95,12 +100,21 @@ void render_loop(
 
         BeginDrawing();
         ClearBackground(BLACK);
-        Clay_Raylib_Render(commands, font.get());
+        clay_extension::render_command_list(
+            commands, std::span<Font>{font.get(), 1}
+        );
         EndDrawing();
     }
 }
 
 namespace clay_extension {
+
+    void raylib_render_command_passthrough(
+        Clay_RenderCommandArray renderCommands, Font *fonts
+    ) noexcept {
+        Clay_Raylib_Render(renderCommands, fonts);
+    }
+
     bool ButtonConfig::render_button(
         std::string_view text, Clay_ElementId id,
         std::optional<

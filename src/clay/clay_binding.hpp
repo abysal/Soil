@@ -2,17 +2,20 @@
 #include "../types.hpp"
 #include "raylib.h"
 #include <clay.h>
+#include <cstdlib>
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <optional>
+#include <string_view>
 
 std::unique_ptr<Font> setup_basics(const char *window_title) noexcept;
 
-void render_loop(
-    std::function<void()> &&func, std::unique_ptr<Font> font
-) noexcept;
+void render_loop(std::function<void()> &&func, std::unique_ptr<Font> font) noexcept;
 
 namespace clay_extension {
+
+    void raylib_render_command_passthrough(Clay_RenderCommandArray renderCommands, Font *fonts) noexcept;
 
     struct ClayElementDeclarationPartial {
         // Controls various settings that affect the size and position of an
@@ -61,17 +64,7 @@ namespace clay_extension {
         }
     };
 
-    namespace internal {
-        inline u64 id = 217938212313;
-    }
-    class Details {
-
-        static u64 next_id() noexcept { return ++internal::id; }
-        friend struct ButtonConfig;
-    };
-
-    void
-    render_simple_button(std::string_view text, soil::Color color) noexcept;
+    void render_simple_button(std::string_view text, soil::Color color) noexcept;
 
     static inline Clay_String to_clay(const std::string_view string) noexcept {
         return Clay_String{
@@ -80,15 +73,22 @@ namespace clay_extension {
         };
     }
 
-    void new_element(
-        Clay_ElementDeclaration declaration, std::function<void()> &&inner
-    ) noexcept;
+    static inline Clay_String to_clay_last(const std::string_view string) noexcept {
+        char* ptr = (char*)malloc(string.length());
+        memcpy(ptr, string.data(), string.length());
+
+        return Clay_String {
+            .length = (i32)string.length(),
+            .chars = ptr
+        };
+    }
+
+    void new_element(Clay_ElementDeclaration declaration, std::function<void()> &&inner) noexcept;
 
     // Ripped *right* from clay
 
-    [[nodiscard]] static constexpr inline Clay_ElementId hash_string(
-        const Clay_String key, const u32 offset = 0, const u32 seed = 0
-    ) noexcept {
+    [[nodiscard]] static constexpr inline Clay_ElementId
+    hash_string(const Clay_String key, const u32 offset = 0, const u32 seed = 0) noexcept {
         uint32_t hash = 0;
         uint32_t base = seed;
 
@@ -109,15 +109,11 @@ namespace clay_extension {
         hash += (hash << 15);
         base += (base << 15);
         return {
-            .id       = hash + 1,
-            .offset   = offset,
-            .baseId   = base + 1,
-            .stringId = key
+            .id = hash + 1, .offset = offset, .baseId = base + 1, .stringId = key
         }; // Reserve the hash result of zero as "null id"
     }
 
-    [[nodiscard]] static constexpr inline Clay_ElementId
-    hash_string(const std::string_view string) noexcept {
+    [[nodiscard]] static constexpr inline Clay_ElementId hash_string(const std::string_view string) noexcept {
         return hash_string(to_clay(string), 0, 0);
     }
 
@@ -132,18 +128,13 @@ namespace clay_extension {
 
         [[nodiscard]] bool render_button(
             std::string_view text, Clay_ElementId id,
-            std::optional<
-                std::function<void(const ButtonConfig &, std::string_view)>>
-                &&callback = std::nullopt,
-            bool  bare     = false
+            std::optional<std::function<void(const ButtonConfig &, std::string_view)>> &&callback = std::nullopt,
+            bool                                                                         bare     = false
         ) const noexcept;
 
-        [[nodiscard]] Clay_ElementDeclaration create_decleration(
-            bool hovered, const Clay_ElementId &id
-        ) const noexcept;
+        [[nodiscard]] Clay_ElementDeclaration create_decleration(bool hovered, const Clay_ElementId &id) const noexcept;
 
-        [[nodiscard]] bool inline is_hovered(const Clay_ElementId &id
-        ) const noexcept {
+        [[nodiscard]] bool inline is_hovered(const Clay_ElementId &id) const noexcept {
             bool hovered = Clay_PointerOver(id);
             return hovered;
         }

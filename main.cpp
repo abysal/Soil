@@ -1,6 +1,7 @@
 #include "./clay/clay_binding.hpp"
-#include "./clay/components.hpp"
-#include "Application/Application.hpp"
+#include "Application/application.hpp"
+#include <print>
+
 
 int main() {
     auto font = setup_basics("Soil");

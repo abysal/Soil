@@ -3,21 +3,24 @@ project(Soil)
 
 set(CMAKE_CXX_STANDARD 26)
 
-add_executable(Soil
-        src/main.cpp
+add_library(Soil
+        external/tfd/tinyfiledialogs.c
         src/clay/clay_binding.cpp
+        src/clay/render.cpp
         src/clay/clay_binding.hpp
         src/clay/templates.hpp
         src/clay/components/header.hpp
         src/types.hpp
-        src/Application/Application.cpp
-        src/Application/ApplicationSidebar.cpp
-        src/Application/Application.hpp
+        src/Application/application.cpp
+        src/Application/components/folder_tree.cpp
+        src/Application/project/filesystem_tree.cpp
+        src/Application/application_sidebar.cpp
+        src/Application/application.hpp
         src/Application/header_bar.hpp
         src/Application/editor_config.hpp
         src/Application/jet_brains_mono.hpp)
-
-include(FetchContent)
+    
+include(FetchContent) 
 set(FETCHCONTENT_QUIET FALSE)
 
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
@@ -35,15 +38,56 @@ FetchContent_Declare(
 FetchContent_Declare(
         clay_headers
         GIT_REPOSITORY https://github.com/abysal/clay_headers.git
-        GIT_TAG main  # Use the appropriate branch, tag, or commit
+        GIT_TAG main # Use the appropriate branch, tag, or commit
 )
+
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/0bdccf4aa2f5c67af967193caf31d42d5c49bde2.zip
+)
+
+# set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
 
 
 FetchContent_MakeAvailable(clay_headers)
 FetchContent_MakeAvailable(raylib)
 message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER}")
 message(STATUS "C Compiler: ${CMAKE_C_COMPILER}")
-target_include_directories(Soil PRIVATE ${clay_headers_SOURCE_DIR})
+target_include_directories(Soil PUBLIC ${clay_headers_SOURCE_DIR})
+target_include_directories(Soil PUBLIC src)
+target_include_directories(Soil PUBLIC external)
 
 add_library(clay INTERFACE)
-target_link_libraries(Soil PRIVATE raylib)
+target_link_libraries(Soil PUBLIC raylib)
+
+add_executable(SoilUi main.cpp)
+target_include_directories(SoilUi PUBLIC ${clay_headers_SOURCE_DIR})
+target_include_directories(SoilUi PUBLIC external)
+target_include_directories(SoilUi PUBLIC src)
+
+
+target_link_libraries(SoilUi PUBLIC raylib)
+target_link_libraries(SoilUi PUBLIC Soil)
+target_compile_options(Soil PRIVATE -Wno-c99-designator)
+target_compile_options(SoilUi PRIVATE -Wno-c99-designator)
+
+enable_testing()
+
+include(GoogleTest)
+
+add_executable(
+        fallback_allocator
+        tests/fallback_allocator.cpp
+)
+
+target_link_libraries(fallback_allocator PUBLIC raylib)
+target_link_libraries(fallback_allocator PUBLIC Soil)
+target_link_libraries(
+        fallback_allocator
+        PUBLIC
+        GTest::gtest_main
+)
+
+gtest_discover_tests(fallback_allocator)

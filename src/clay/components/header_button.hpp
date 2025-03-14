@@ -15,7 +15,10 @@ namespace clay_extension {
                 this->render_text, this->ele_id, std::nullopt, true
             );
 
-            OnClickCaller<BaseClass>::on_click(static_cast<BaseClass &>(*this));
+            if (clicked)
+                OnClickCaller<BaseClass>::on_click(
+                    static_cast<BaseClass &>(*this)
+                );
         }
 
         std::string id() const noexcept { return this->render_id; }
