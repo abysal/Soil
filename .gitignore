@@ -1,0 +1,7 @@
+cmake-*-*
+.idea
+build*
+.cache
+.vscode
+*.code-workspace
+.vs
