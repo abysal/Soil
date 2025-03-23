@@ -2,6 +2,7 @@
 #include "Application/project/filesystem_tree.hpp"
 #include "types.hpp"
 #include <memory>
+#include <unordered_set>
 
 namespace soil {
 
@@ -18,6 +19,15 @@ namespace soil {
     };
 
     class FolderTree {
+    private:
+        struct State {
+            std::unordered_set<usize> enabled_folders{};
+
+            bool show(usize hash) const noexcept {
+                return this->enabled_folders.contains(hash);
+            }
+        };
+
     public:
         FolderTree(std::weak_ptr<FilesystemTree> ptr) noexcept : tree(ptr) {}
 
@@ -25,10 +35,15 @@ namespace soil {
 
         void reset_ptr(std::weak_ptr<FilesystemTree> ptr) noexcept {
             this->tree.reset();
-            this->tree = ptr;
+            this->tree  = ptr;
+            this->state = State{};
         }
 
     private:
+        void handle_hover(Clay_ElementId id, usize global_hash) noexcept;
+
+    private:
         std::weak_ptr<FilesystemTree> tree{};
+        State                         state{};
     };
 } // namespace soil

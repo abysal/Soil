@@ -7,7 +7,9 @@
 #include <cstdlib>
 #include <filesystem>
 #include <memory_resource>
+#include <ostream>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace soil {
@@ -37,7 +39,8 @@ namespace soil {
                 ptr = ptr->get_parent();
             }
 
-            while (this->global_hash_loopup.contains(end_hash) && this->global_hash_loopup.at(end_hash) != node) {
+            while (this->global_hash_loopup.contains(end_hash) &&
+                   this->global_hash_loopup.at(end_hash) != node) {
                 end_hash++;
             }
 
@@ -45,6 +48,26 @@ namespace soil {
 
             this->global_hash_loopup[end_hash] = node;
         };
+
+        nodes.push_back(&this->root_node);
+
+        while (!nodes.empty()) {
+            pmr::vector<std::observer_ptr<FileNode>> next_iter{&base_allocator};
+
+            for (auto ptr : nodes) {
+                compute_hash(ptr);
+
+                if (ptr->is_file()) {
+                    continue;
+                }
+
+                for (auto &p : ptr->as_folder().children) {
+                    next_iter.push_back(p.get());
+                }
+            }
+
+            std::swap(nodes, next_iter);
+        }
     }
 
     void FilesystemTree::index() {
@@ -52,7 +75,10 @@ namespace soil {
 
         constexpr usize allocation_size = (usize)134217728;
         std::size_t     alignment       = std::alignment_of_v<std::max_align_t>;
-        auto            deleter         = [](u8 *ptr) { soil::aligned_free_wrapper(ptr); };
+        auto            deleter         = [](u8 *ptr) {
+            soil::aligned_free_wrapper(ptr);
+            std::println("Freeing Slab");
+        };
 
         std::unique_ptr<u8[], decltype(deleter)> use_memory(
             static_cast<u8 *>(soil::aligned_alloc_wrapper(alignment, allocation_size)), deleter
@@ -87,34 +113,42 @@ namespace soil {
                                fs::directory_options::follow_directory_symlink
             };
             for (const auto &x : root_iter) {
-                if (x.is_regular_file()) {
-                    const auto &path = x.path();
+                try {
+                    if (x.is_regular_file()) {
+                        const auto &path = x.path();
 
-                    std::string name = path.filename().string();
-                    std::string ext  = path.extension().string();
+                        std::string name = path.filename().string();
+                        std::string ext  = path.extension().string();
 
-                    if (!ext.empty()) {
-                        name = name.substr(0, name.size() - ext.length());
+                        if (!ext.empty()) {
+                            name = name.substr(0, name.size() - ext.length());
+                        }
+
+                        auto node =
+                            FileNode::file(parent_node, std::move(name), std::move(ext));
+
+                        parent_node->new_member(std::move(node));
+                    } else if (x.is_directory()) {
+                        std::string name = x.path().filename().string();
+
+                        auto node = FileNode::folder(parent_node, std::move(name));
+
+                        parent_node->new_member(std::move(node));
+
+                        pmr::string full_path{x.path().string(), &base_allocator};
+
+                        const usize folder_index = parent_node->last_pushed_index();
+                        auto        parent       = parent_node->node_from_index(folder_index);
+
+                        out_vector.emplace_back(
+                            FolderVisiter{.insert_target = parent, .folder_location = full_path}
+                        );
                     }
-
-                    auto node = FileNode::file(parent_node, std::move(name), std::move(ext));
-
-                    parent_node->new_member(std::move(node));
-                } else if (x.is_directory()) {
-                    std::string name = x.path().filename().string();
-
-                    auto node = FileNode::folder(parent_node, std::move(name));
-
-                    parent_node->new_member(std::move(node));
-
-                    pmr::string full_path{x.path().string(), &base_allocator};
-
-                    const usize folder_index = parent_node->last_pushed_index();
-                    auto        parent       = parent_node->node_from_index(folder_index);
-
-                    out_vector.emplace_back(
-                        FolderVisiter{.insert_target = parent, .folder_location = full_path}
-                    );
+                } catch (std::filesystem::filesystem_error err) {
+                    std::println("{}", err.what());
+                } catch (...) {
+                    // TODO: Handle UTF8 PROPERLY
+                    std::println("Unknown Error");
                 }
             }
         };

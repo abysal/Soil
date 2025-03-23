@@ -1,6 +1,8 @@
 #include "./folder_tree.hpp"
 #include "clay/templates.hpp"
+#include "raylib.h"
 #include "types.hpp"
+#include <cassert>
 #include <clay/clay_binding.hpp>
 #include <print>
 
@@ -25,17 +27,37 @@ void FolderTree::render(const FolderTreeConfig &config) noexcept {
         for (const auto &node : base.as_folder().children) {
             usize offset = indent_level * config.indent_per_level;
 
+            const bool deep_render =
+                node->is_folder() && this->state.enabled_folders.contains(node->gash());
+
             new_element({.layout = {.sizing = {CLAY_SIZING_GROW()}}}, [&] {
-                Color color = Clay_Hovered() ? config.background_color *
-                                                   (1. + config.on_hover_lighten_amount)
-                                             : config.background_color;
+                const auto hovered = Clay_Hovered();
+                Color      color =
+                    hovered ? config.background_color * (1. + config.on_hover_lighten_amount)
+                                 : config.background_color;
 
                 new_element(
                     {
-                        .layout          = {.padding = {0, 4, 0, 0}},
+                        .layout =
+                            {.padding = {0, 4, 0, 0},
+                             .sizing  = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}},
                         .backgroundColor = color,
                     },
                     [&] {
+                        if (node->is_folder()) {
+
+                            auto txt_cfg = text_config(
+                                {.fontSize = config.font_size, .textColor = {255, 255, 255, 255}
+                                }
+                            );
+
+                            if (this->state.show(node->gash())) {
+                                CLAY_TEXT(CLAY_STRING("-"), txt_cfg.get());
+                            } else {
+                                CLAY_TEXT(CLAY_STRING("+"), txt_cfg.get());
+                            }
+                        }
+
                         new_element(
                             {.layout =
                                  {.sizing =
@@ -56,13 +78,12 @@ void FolderTree::render(const FolderTreeConfig &config) noexcept {
                     }
                 );
 
-                new_element(
-                    {.layout          = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}},
-                     .backgroundColor = color},
-                    [&] {}
-                );
+                if (hovered) {
+                    this->handle_hover(owner_id(), node->gash());
+                }
             });
-            if (node->is_folder()) {
+
+            if (deep_render) {
                 indent_level++;
                 render_layer(*node.get());
                 indent_level--;
@@ -88,4 +109,27 @@ void FolderTree::render(const FolderTreeConfig &config) noexcept {
             render_layer(root);
         }
     );
+}
+
+void FolderTree::handle_hover(Clay_ElementId id, usize global_hash) noexcept {
+    assert(!this->tree.expired()
+    ); // If this triggers this function was somehow called outside of the renderer
+
+    if (!IsMouseButtonPressed(0)) {
+        return; // For now we only handle clicks
+    }
+
+    const auto ptr = this->tree.lock();
+
+    const auto node = ptr->get_node_from_hash(global_hash);
+
+    if (node->is_file()) {
+        return; // TODO: Handle active file switching
+    }
+
+    if (this->state.enabled_folders.contains(node->gash())) {
+        this->state.enabled_folders.erase(node->gash());
+    } else {
+        this->state.enabled_folders.insert(node->gash());
+    }
 }

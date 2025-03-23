@@ -1,4 +1,5 @@
 #pragma once
+#include <compare> // MSVC requires this
 
 namespace std_ext {
 
@@ -18,7 +19,7 @@ namespace std_ext {
 
         constexpr explicit operator bool() const noexcept { return ptr != nullptr; }
 
-        constexpr auto operator<=>(const ObserverPtr<T>&) const noexcept = default;
+        constexpr auto operator<=>(const ObserverPtr<T> &) const noexcept = default;
 
     private:
         T *ptr{nullptr};

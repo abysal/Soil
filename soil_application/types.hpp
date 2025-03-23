@@ -2,6 +2,9 @@
 // Created by Akashi on 02/03/25.
 //
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #ifndef TYPES_HPP
 #define TYPES_HPP
 #include <algorithm>
@@ -20,6 +23,14 @@ using u32 = unsigned int;
 using i32 = int;
 using u64 = unsigned long long;
 using i64 = long long;
+
+using f32 = float;
+using f64 = double;
+#ifdef _DEBUG
+#define DEBUG_ONLY(...) __VA_ARGS__
+#else
+#define DEBUG_ONLY(...)
+#endif
 
 #if _WIN32 || _WIN64
 #if _WIN64
@@ -44,12 +55,9 @@ using usize = size_t;
 
 #else
 
-using usize = size_t
+using usize = size_t;
 
 #endif
-
-using f32 = float;
-using f64 = double;
 
 namespace soil {
     template <typename T> struct Vector2Base {
@@ -96,23 +104,19 @@ namespace soil {
             } else {
                 return {
                     static_cast<T>(std::clamp(
-                        self.x * static_cast<T>(v),
-                        std::numeric_limits<T>::min(),
+                        self.x * static_cast<T>(v), std::numeric_limits<T>::min(),
                         std::numeric_limits<T>::max()
                     )),
                     static_cast<T>(std::clamp(
-                        self.y * static_cast<T>(v),
-                        std::numeric_limits<T>::min(),
+                        self.y * static_cast<T>(v), std::numeric_limits<T>::min(),
                         std::numeric_limits<T>::max()
                     )),
                     static_cast<T>(std::clamp(
-                        self.z * static_cast<T>(v),
-                        std::numeric_limits<T>::min(),
+                        self.z * static_cast<T>(v), std::numeric_limits<T>::min(),
                         std::numeric_limits<T>::max()
                     )),
                     static_cast<T>(std::clamp(
-                        self.w * static_cast<T>(v),
-                        std::numeric_limits<T>::min(),
+                        self.w * static_cast<T>(v), std::numeric_limits<T>::min(),
                         std::numeric_limits<T>::max()
                     ))
                 };
@@ -120,10 +124,8 @@ namespace soil {
         }
 
         template <typename Self>
-        constexpr bool
-        operator==(this const Self &self, const Self &o) noexcept {
-            return self.x == o.x && self.y == o.y && self.z == o.z &&
-                   self.w == o.w;
+        constexpr bool operator==(this const Self &self, const Self &o) noexcept {
+            return self.x == o.x && self.y == o.y && self.z == o.z && self.w == o.w;
         }
     };
 
@@ -131,8 +133,7 @@ namespace soil {
     using Vec2i = Vector2Base<i32>;
 
     // Assumes that this is valid hex
-    template <std::integral T>
-    constexpr T from_hex(std::string_view str) noexcept {
+    template <std::integral T> constexpr T from_hex(std::string_view str) noexcept {
 
         const auto char_conv = [](const char c) {
             return (c >= '0' && c <= '9')   ? (c - '0')
@@ -158,17 +159,15 @@ namespace soil {
         // NOLINTNEXTLINE
         operator Clay_Color() const noexcept {
             return {
-                static_cast<f32>(this->x), static_cast<f32>(this->y),
-                static_cast<f32>(this->z), static_cast<f32>(this->w)
+                static_cast<f32>(this->x), static_cast<f32>(this->y), static_cast<f32>(this->z),
+                static_cast<f32>(this->w)
             };
         }
 
         constexpr Color(std::string_view color) {
             if (color.length() > 9) {
-                throw std::invalid_argument(
-                    "The color passed into the Color hex "
-                    "decoder was not a valid hex code"
-                );
+                throw std::invalid_argument("The color passed into the Color hex "
+                                            "decoder was not a valid hex code");
             }
 
             if (color.starts_with('#')) {
@@ -197,21 +196,11 @@ namespace soil {
         }
     };
 
-    static_assert(
-        Color("FFFFFF") == Color{255, 255, 255, 255}, "Color Conversion Broken!"
-    );
+    static_assert(Color("FFFFFF") == Color{255, 255, 255, 255}, "Color Conversion Broken!");
 
-    static_assert(
-        Color("#FFFFFFFF") == Color{255, 255, 255, 255},
-        "Color Conversion Broken!"
-    );
-    static_assert(
-        Color("FFFFFF00") == Color{255, 255, 255, 0}, "Color Conversion Broken!"
-    );
-    static_assert(
-        Color("FEFDFBFF") == Color{254, 253, 251, 255},
-        "Color Conversion Broken!"
-    );
+    static_assert(Color("#FFFFFFFF") == Color{255, 255, 255, 255}, "Color Conversion Broken!");
+    static_assert(Color("FFFFFF00") == Color{255, 255, 255, 0}, "Color Conversion Broken!");
+    static_assert(Color("FEFDFBFF") == Color{254, 253, 251, 255}, "Color Conversion Broken!");
 
     template <typename... StorageTypes> class DynamicVariant {
     public:

@@ -13,6 +13,8 @@
 #include "Application/application_sidebar.hpp"
 #include "Application/components/folder_tree.hpp"
 #include "Application/project/project.hpp"
+#include "DirectXMagic/dx_creation.hpp"
+#include "clay/templates.hpp"
 #include "components/simple_button.hpp"
 #include "types.hpp"
 #include <print>
@@ -28,7 +30,8 @@ namespace soil {
                   .layout =
                       {.sizing =
                            {.width  = CLAY_SIZING_GROW(0),
-                            .height = {f32(std::to_underlying(this->visual_config.bar_height))}},
+                            .height = {f32(std::to_underlying(this->visual_config.bar_height))}
+                           },
                        .padding         = CLAY_PADDING_ALL(8),
                        .childGap        = 16,
                        .childAlignment  = {.y = CLAY_ALIGN_Y_CENTER},
@@ -41,8 +44,8 @@ namespace soil {
               BasicButton(
                   this->visual_config, "Open Project", "OpenProject",
                   [&] {
-                      const char *selected = tinyfd_selectFolderDialog("Project Folder", nullptr);
-
+                      const char *selected =
+                          tinyfd_selectFolderDialog("Project Folder", nullptr);
 
                       if (!selected) {
                           return; // Just means they didnt select anything
@@ -51,11 +54,34 @@ namespace soil {
                       this->handle_project_change(selected);
                   }
               ),
-              BasicButton(this->visual_config, "Settings", "Settings", [&] {})
-          )) {}
+              BasicButton(this->visual_config, "Settings", "Settings", [&] {}),
+              BasicButton(
+                  this->visual_config, "DirectX12Debug", "dxdbg",
+                  [&] { this->d3d12_ctx->upload_debug_texture(); }
+              ),
+              BasicButton(
+                  this->visual_config, "Upload Opengl Debug", "ogl_debug",
+                  [&] {
+                      if (!this->ogl_ctx) {
+                          this->ogl_ctx =
+                              std::make_unique<ogl::OpenGl>(std::move(ogl::OpenGl{}));
+                      }
+
+                      this->ogl_ctx->load_test_texture();
+                  }
+              ),
+              BasicButton(
+                  this->visual_config, "Direct X to OpenGl", "ogl_dx",
+                  [&] { this->ogl_ctx->dx_to_ogl(this->d3d12_ctx.get()); }
+              )
+          )) {
+        this->d3d12_ctx = std::make_unique<D3D::D3D12>(std::move(D3D::D3D12{}));
+    }
 
     void Application::render() noexcept {
-        constexpr Clay_Sizing layout = {.width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)};
+        constexpr Clay_Sizing layout = {
+            .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)
+        };
         CLAY({
             .id = hash_string("Holder"),
             .layout =
@@ -68,9 +94,15 @@ namespace soil {
             .backgroundColor = this->visual_config.base_color,
         }) {
             this->render_head_bar();
-            if (this->sidebar) {
-                this->sidebar->render(this->visual_config);
-            }
+            new_element({.layout.layoutDirection = CLAY_LEFT_TO_RIGHT}, [&] {
+                if (this->sidebar) {
+                    this->sidebar->render(this->visual_config);
+                }
+
+                if (this->ogl_ctx) {
+                    this->ogl_ctx->display_debug_texture();
+                }
+            });
         }
     }
 
@@ -81,7 +113,9 @@ namespace soil {
         new_element(
             {.id = hash_string("Header Holder"),
              .layout =
-                 {.layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = {.width = CLAY_SIZING_GROW(), .height = {bar_height}}
+                 {
+                     .sizing          = {.width = CLAY_SIZING_GROW(), .height = {bar_height}},
+                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
                  }},
             [&] {
                 this->header.render(this->visual_config);
@@ -106,6 +140,8 @@ namespace soil {
 
         Project project{std::move(path)};
 
+        project.tree().lock()->deep_index();
+
         this->project = std::make_unique<Project>(std::forward<Project>(project));
 
         if (this->sidebar) {
@@ -113,7 +149,8 @@ namespace soil {
         } else {
             FolderTree tree{this->project->tree()};
 
-            this->sidebar = std::make_unique<ApplicationSidebar>(ApplicationSidebar{std::move(tree)});
+            this->sidebar =
+                std::make_unique<ApplicationSidebar>(ApplicationSidebar{std::move(tree)});
         }
     }
 

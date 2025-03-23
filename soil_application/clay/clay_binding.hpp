@@ -1,6 +1,7 @@
 #pragma once
 #include "../types.hpp"
-#include "raylib.h"
+#include "Application/memory/pointer.hpp"
+#include "raywrapped.hpp"
 #include <clay.h>
 #include <cstdlib>
 #include <cstring>
@@ -15,7 +16,16 @@ void render_loop(std::function<void()> &&func, std::unique_ptr<Font> font) noexc
 
 namespace clay_extension {
 
-    void raylib_render_command_passthrough(Clay_RenderCommandArray renderCommands, Font *fonts) noexcept;
+    inline std::observer_ptr<Clay_TextElementConfig> text_config(Clay_TextElementConfig cfg
+    ) noexcept {
+        return Clay__StoreTextElementConfig(cfg);
+    }
+
+    void raylib_render_command_passthrough(
+        Clay_RenderCommandArray renderCommands, Font *fonts
+    ) noexcept;
+
+    Clay_ElementId owner_id() noexcept;
 
     struct ClayElementDeclarationPartial {
         // Controls various settings that affect the size and position of an
@@ -74,16 +84,14 @@ namespace clay_extension {
     }
 
     static inline Clay_String to_clay_last(const std::string_view string) noexcept {
-        char* ptr = (char*)malloc(string.length());
+        char *ptr = (char *)malloc(string.length());
         memcpy(ptr, string.data(), string.length());
 
-        return Clay_String {
-            .length = (i32)string.length(),
-            .chars = ptr
-        };
+        return Clay_String{.length = (i32)string.length(), .chars = ptr};
     }
 
-    void new_element(Clay_ElementDeclaration declaration, std::function<void()> &&inner) noexcept;
+    void
+    new_element(Clay_ElementDeclaration declaration, std::function<void()> &&inner) noexcept;
 
     // Ripped *right* from clay
 
@@ -113,7 +121,8 @@ namespace clay_extension {
         }; // Reserve the hash result of zero as "null id"
     }
 
-    [[nodiscard]] static constexpr inline Clay_ElementId hash_string(const std::string_view string) noexcept {
+    [[nodiscard]] static constexpr inline Clay_ElementId
+    hash_string(const std::string_view string) noexcept {
         return hash_string(to_clay(string), 0, 0);
     }
 
@@ -128,11 +137,13 @@ namespace clay_extension {
 
         [[nodiscard]] bool render_button(
             std::string_view text, Clay_ElementId id,
-            std::optional<std::function<void(const ButtonConfig &, std::string_view)>> &&callback = std::nullopt,
-            bool                                                                         bare     = false
+            std::optional<std::function<void(const ButtonConfig &, std::string_view)>>
+                &&callback = std::nullopt,
+            bool  bare     = false
         ) const noexcept;
 
-        [[nodiscard]] Clay_ElementDeclaration create_decleration(bool hovered, const Clay_ElementId &id) const noexcept;
+        [[nodiscard]] Clay_ElementDeclaration
+        create_decleration(bool hovered, const Clay_ElementId &id) const noexcept;
 
         [[nodiscard]] bool inline is_hovered(const Clay_ElementId &id) const noexcept {
             bool hovered = Clay_PointerOver(id);

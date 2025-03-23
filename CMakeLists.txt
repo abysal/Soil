@@ -3,9 +3,9 @@ project(Soil)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(GRAPHICS GRAPHICS_API_OPENGL_43)
 
-add_library(Soil
-        external/tfd/tinyfiledialogs.c
+set(SOURCE_FILES external/tfd/tinyfiledialogs.c
         soil_application/clay/clay_binding.cpp
         soil_application/clay/render.cpp
         soil_application/clay/clay_binding.hpp
@@ -21,13 +21,30 @@ add_library(Soil
         soil_application/Application/application.hpp
         soil_application/Application/header_bar.hpp
         soil_application/Application/editor_config.hpp
-        soil_application/Application/jet_brains_mono.hpp)
-    
-include(FetchContent) 
+        soil_application/Application/jet_brains_mono.hpp
+        soil_application/open_gl_magic/ogl.cpp)
+include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
 
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
 set(BUILD_GAMES OFF CACHE BOOL "" FORCE) # don't build the supplied example games
+
+if(WIN32)
+        list(APPEND SOURCE_FILES "soil_application/DirectXMagic/dx_creation.cpp")
+
+        FetchContent_Declare(dx12_headers
+                GIT_REPOSITORY https://github.com/microsoft/DirectX-Headers.git
+                GIT_TAG "main"
+                GIT_PROGRESS TRUE
+                GIT_SHALLOW TRUE
+        )
+
+        FetchContent_MakeAvailable(dx12_headers)
+endif()
+
+add_library(Soil
+        ${SOURCE_FILES})
+
 
 FetchContent_Declare(
         raylib
@@ -70,29 +87,20 @@ target_include_directories(SoilUi PUBLIC ${clay_headers_SOURCE_DIR})
 target_include_directories(SoilUi PUBLIC external)
 target_include_directories(SoilUi PUBLIC soil_application)
 
+add_definitions(-DGRAPHICS_API_OPENGL_43)
+
+if(WIN32)
+
+        target_include_directories(Soil PUBLIC ${dx12_headers_SOURCE_DIR}/include)
+        target_include_directories(SoilUi PUBLIC ${dx12_headers_SOURCE_DIR}/include)
+
+endif()
+
 
 target_link_libraries(SoilUi PUBLIC raylib)
 target_link_libraries(SoilUi PUBLIC Soil)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(Soil PRIVATE -Wno-c99-designator)
-    target_compile_options(SoilUi PRIVATE -Wno-c99-designator)
+        target_compile_options(Soil PRIVATE -Wno-c99-designator)
+        target_compile_options(SoilUi PRIVATE -Wno-c99-designator)
 endif()
 
-# enable_testing()
-
-# include(GoogleTest)
-
-# add_executable(
-#         fallback_allocator
-#         tests/fallback_allocator.cpp
-# )
-
-# target_link_libraries(fallback_allocator PUBLIC raylib)
-# target_link_libraries(fallback_allocator PUBLIC Soil)
-# target_link_libraries(
-#         fallback_allocator
-#         PUBLIC
-#         GTest::gtest_main
-# )
-
-# gtest_discover_tests(fallback_allocator)
