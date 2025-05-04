@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <memory_resource>
-#include <ostream>
+#include <print>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -61,7 +61,7 @@ namespace soil {
                     continue;
                 }
 
-                for (auto &p : ptr->as_folder().children) {
+                for (auto& p : ptr->as_folder().children) {
                     next_iter.push_back(p.get());
                 }
             }
@@ -75,13 +75,13 @@ namespace soil {
 
         constexpr usize allocation_size = (usize)134217728;
         std::size_t     alignment       = std::alignment_of_v<std::max_align_t>;
-        auto            deleter         = [](u8 *ptr) {
+        auto            deleter         = [](u8* ptr) {
             soil::aligned_free_wrapper(ptr);
             std::println("Freeing Slab");
         };
 
         std::unique_ptr<u8[], decltype(deleter)> use_memory(
-            static_cast<u8 *>(soil::aligned_alloc_wrapper(alignment, allocation_size)), deleter
+            static_cast<u8*>(soil::aligned_alloc_wrapper(alignment, allocation_size)), deleter
         );
 
         std::span<u8> memory = std::span<u8>{use_memory.get(), allocation_size};
@@ -106,16 +106,16 @@ namespace soil {
         std::observer_ptr<FileNode> active_node = std::make_observer(&this->root_node);
 
         const auto single_layer = [&](std::observer_ptr<FileNode> parent_node,
-                                      pmr::vector<FolderVisiter> &out_vector,
-                                      const fs::path             &loop_path) {
+                                      pmr::vector<FolderVisiter>& out_vector,
+                                      const fs::path&             loop_path) {
             fs::directory_iterator root_iter{
                 loop_path, fs::directory_options::skip_permission_denied |
                                fs::directory_options::follow_directory_symlink
             };
-            for (const auto &x : root_iter) {
+            for (const auto& x : root_iter) {
                 try {
                     if (x.is_regular_file()) {
-                        const auto &path = x.path();
+                        const auto& path = x.path();
 
                         std::string name = path.filename().string();
                         std::string ext  = path.extension().string();
@@ -153,18 +153,22 @@ namespace soil {
             }
         };
 
-        single_layer(active_node, too_visit, this->root_path);
+        try {
+            single_layer(active_node, too_visit, this->root_path);
 
-        while (!too_visit.empty()) {
-            pmr::vector<FolderVisiter> next_iteration{&base_allocator};
+            while (!too_visit.empty()) {
+                pmr::vector<FolderVisiter> next_iteration{&base_allocator};
 
-            for (auto &section : too_visit) {
-                fs::path pth{section.folder_location};
+                for (auto& section : too_visit) {
+                    fs::path pth{section.folder_location};
 
-                single_layer(section.insert_target, next_iteration, pth);
+                    single_layer(section.insert_target, next_iteration, pth);
+                }
+
+                std::swap(too_visit, next_iteration);
             }
-
-            std::swap(too_visit, next_iteration);
+        } catch (fs::filesystem_error error) {
+            std::println("{}", error.what());
         }
     }
 } // namespace soil

@@ -9,15 +9,7 @@
             "cmakeCommandArgs": "",
             "buildCommandArgs": "",
             "ctestCommandArgs": "",
-            "inheritEnvironments": [
-                "msvc_x64_x64"
-            ],
-            "variables": [
-                {
-                    "name": "CMAKE_TOOLCHAIN_FILE",
-                    "value": "$ENV{CMAKE_TOOLCHAIN_FILE}"
-                }
-            ]
+            "inheritEnvironments": [ "msvc_x64_x64" ]
         },
         {
             "name": "x64-Clang-Debug",
@@ -28,15 +20,7 @@
             "cmakeCommandArgs": "",
             "buildCommandArgs": "",
             "ctestCommandArgs": "",
-            "inheritEnvironments": [
-                "clang_cl_x64_x64"
-            ],
-            "variables": [
-                {
-                    "name": "CMAKE_TOOLCHAIN_FILE",
-                    "value": "$ENV{CMAKE_TOOLCHAIN_FILE}"
-                }
-            ]
+            "inheritEnvironments": [ "clang_cl_x64_x64" ]
         },
         {
             "name": "x64-Clang-Release",
@@ -47,13 +31,12 @@
             "cmakeCommandArgs": "",
             "buildCommandArgs": "",
             "ctestCommandArgs": "",
-            "inheritEnvironments": [
-                "clang_cl_x64_x64"
-            ],
+            "inheritEnvironments": [ "clang_cl_x64_x64" ],
             "variables": [
                 {
                     "name": "CMAKE_TOOLCHAIN_FILE",
-                    "value": "$ENV{CMAKE_TOOLCHAIN_FILE}"
+                    "value": "",
+                    "type": "STRING"
                 }
             ]
         }

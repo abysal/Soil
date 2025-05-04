@@ -2,8 +2,8 @@
 #include "Application/application.hpp"
 #include <print>
 
-
 int main() {
+
     auto font = setup_basics("Soil");
 
     auto app = soil::Application();

@@ -18,8 +18,7 @@ namespace soil {
         std::same_as<typename T::value_type, u8>;
 
         { a.size() } -> std::same_as<usize>;
-        requires std::is_same_v<
-            std::decay_t<decltype(a[index])>, typename T::value_type>;
+        requires std::is_same_v<std::decay_t<decltype(a[index])>, typename T::value_type>;
     };
 
     template <
@@ -29,12 +28,11 @@ namespace soil {
     class BinaryCursor;
 
     template <typename T, typename X, std::endian Y> struct Deserializer {
-        constexpr static T deserialize(BinaryCursor<X, Y> &cursor
-        ) noexcept = delete;
+        constexpr static T deserialize(BinaryCursor<X, Y>& cursor) noexcept = delete;
     };
 
     template <typename T, typename X, std::endian Y>
-    concept Deserializable = requires(BinaryCursor<X, Y> &cursor) {
+    concept Deserializable = requires(BinaryCursor<X, Y>& cursor) {
         { Deserializer<T, X, Y>::deserialize(cursor) } -> std::same_as<T>;
     };
 
@@ -46,15 +44,13 @@ namespace soil {
         usize               index = 0;
 
     public:
-        constexpr BinaryCursor(StorageBuffer &&buffer, usize starting_index = 0) noexcept
+        constexpr BinaryCursor(StorageBuffer&& buffer, usize starting_index = 0) noexcept
             : buffer(std::move(buffer)), index(starting_index) {};
 
         template <typename T>
             requires Deserializable<T, StorageBuffer, DefaultEndian>
         constexpr T get() noexcept {
-            return Deserializer<T, StorageBuffer, DefaultEndian>::deserialize(
-                *this
-            );
+            return Deserializer<T, StorageBuffer, DefaultEndian>::deserialize(*this);
         }
 
         constexpr u8 get_byte() noexcept { return this->buffer[index++]; }
@@ -62,40 +58,36 @@ namespace soil {
         template <typename T>
             requires Deserializable<T, StorageBuffer, DefaultEndian>
         constexpr T peek() const noexcept {
-            BinaryCursor *self = const_cast<BinaryCursor *>(this);
+            BinaryCursor* self = const_cast<BinaryCursor*>(this);
 
             const auto before = self->index;
 
-            const auto return_val =
-                self->get<T, StorageBuffer, DefaultEndian>();
+            const auto return_val = self->get<T, StorageBuffer, DefaultEndian>();
 
             self->index = before;
 
             return return_val;
         }
 
-        constexpr void inline jump(usize position) noexcept {
-            this->index = position;
-        }
+        constexpr void inline jump(usize position) noexcept { this->index = position; }
     };
 
-#define BASIC_TYPE(TYPE)                                                       \
-    template <typename S, std::endian E> struct Deserializer<TYPE, S, E> {     \
-        constexpr static TYPE deserialize(BinaryCursor<S, E> &cursor           \
-        ) noexcept {                                                           \
-            TYPE out{};                                                        \
-                                                                               \
-            for (usize i = 0; i < sizeof(TYPE); i++) {                         \
-                out <<= CHAR_WIDTH;                                            \
-                out  |= cursor.get_byte();                                     \
-            }                                                                  \
-                                                                               \
-            if constexpr (E == std::endian::native) {                          \
-                out = std::byteswap(out);                                      \
-            }                                                                  \
-                                                                               \
-            return out;                                                        \
-        }                                                                      \
+#define BASIC_TYPE(TYPE)                                                                       \
+    template <typename S, std::endian E> struct Deserializer<TYPE, S, E> {                     \
+        constexpr static TYPE deserialize(BinaryCursor<S, E>& cursor) noexcept {               \
+            TYPE out{};                                                                        \
+                                                                                               \
+            for (usize i = 0; i < sizeof(TYPE); i++) {                                         \
+                out <<= CHAR_WIDTH;                                                            \
+                out  |= cursor.get_byte();                                                     \
+            }                                                                                  \
+                                                                                               \
+            if constexpr (E == std::endian::native) {                                          \
+                out = std::byteswap(out);                                                      \
+            }                                                                                  \
+                                                                                               \
+            return out;                                                                        \
+        }                                                                                      \
     };
 
     BASIC_TYPE(u8);

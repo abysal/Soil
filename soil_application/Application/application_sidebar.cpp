@@ -3,24 +3,23 @@
 
 namespace soil {
     using namespace clay_extension;
-    void ApplicationSidebar::render(EditorVisualConfig &config) noexcept {
+    void ApplicationSidebar::render(EditorVisualConfig& config) noexcept {
 
         Clay_Sizing size = {
-            .width = {.size = {.minMax = 300}, .type = CLAY__SIZING_TYPE_FIXED},
-            .height =
-                {
-                    .size = {.minMax = 100},
-                    .type = CLAY__SIZING_TYPE_FIXED,
-                },
+            .width  = CLAY_SIZING_FIXED(300),
+            .height = CLAY_SIZING_GROW(),
         };
 
         new_element(
             Clay_ElementDeclaration{
-                .id              = hash_string("Sidebar"),
+                .id = hash_string("Sidebar"),
+                .layout =
+                    {
+                        .sizing  = size,
+                        .padding = {4, 4, 4, 4},
+                    },
                 .backgroundColor = config.sidebar_background_color,
-                .layout = {
-                    .padding = {4, 4, 4, 4}
-                },
+
             },
             [&] {
                 const auto folder_view_id = hash_string("FolderView");

@@ -22,19 +22,19 @@ namespace soil {
     private:
         template <typename T> struct DeserContext {
             BinaryCursor<T, std::endian::big> cursor;
-            const std::vector<TableEntry>    &tables;
+            const std::vector<TableEntry>&    tables;
 
             constexpr std::optional<usize> jump_to_table_raw(u32 id) noexcept {
                 const auto it = std::find_if(
                     this->tables.begin(), this->tables.end(),
-                    [&](const TableEntry &table) { return table.tag == id; }
+                    [&](const TableEntry& table) { return table.tag == id; }
                 );
 
                 if (it == this->tables.end()) {
                     return std::nullopt;
                 }
 
-                const TableEntry &entry = *it;
+                const TableEntry& entry = *it;
 
                 this->cursor.jump(entry.offset);
 
@@ -43,10 +43,10 @@ namespace soil {
         };
 
     public:
-
         template <typename T>
-        constexpr TTF(const std::vector<TableEntry>      &tables,
-            BinaryCursor<T, std::endian::big> &&cursor) {
+        constexpr TTF(
+            const std::vector<TableEntry>& tables, BinaryCursor<T, std::endian::big>&& cursor
+        ) {
             DeserContext<T> ctx = {.cursor = cursor, .tables = tables};
 
             const auto length = ctx.jump_to_table_raw('maxp');
@@ -64,9 +64,7 @@ namespace soil {
         // Parses a TTF file from some memory, assumes its valid data
         // Please call a validation function on this data
         constexpr static TTF from_data(const std::span<u8> data) noexcept {
-            BinaryCursor<const std::span<u8>, std::endian::big> cursor{
-                std::move(data)
-            };
+            BinaryCursor<const std::span<u8>, std::endian::big> cursor{std::move(data)};
 
             cursor.get<u32>(); // scaler type
             u16 table_number = cursor.get<u16>();
@@ -83,13 +81,13 @@ namespace soil {
                 u32 offset = cursor.get<u32>();
                 u32 length = cursor.get<u32>();
 
-                tables.push_back({tag, offset, length});
+                tables.push_back({.tag = tag, .offset = offset, .length = length});
             }
 
             return TTF{tables, std::move(cursor)};
         }
 
-        u16 glyphs_count() const noexcept { return this->glyph_count; }
+        [[nodiscard]] u16 glyphs_count() const noexcept { return this->glyph_count; }
 
     private:
         u16 glyph_count{};

@@ -7,11 +7,15 @@
 #include "../clay/components.hpp"
 #include "./components/simple_button.hpp"
 #include "Application/application_sidebar.hpp"
+#include "Application/components/simple_button.hpp"
 #include "Application/project/project.hpp"
 #include "editor_config.hpp"
+#include "windows/injector.hpp"
 #include <DirectXMagic/dx_creation.hpp>
 #include <memory>
 #include <open_gl_magic/ogl.hpp>
+
+#include "./windows/dx_talker.hpp"
 
 namespace soil {
     using namespace clay_extension;
@@ -24,19 +28,20 @@ namespace soil {
     private:
         void render_head_bar() noexcept;
 
-        void handle_project_change(const char *new_path) noexcept;
+        void handle_project_change(const char* new_path) noexcept;
 
     private:
-        using HeaderType = HeaderBar<
-            EditorVisualConfig, BasicButton, BasicButton, BasicButton, BasicButton,
-            BasicButton>;
+        using HeaderType = HeaderBar<EditorVisualConfig, BasicButton, BasicButton>;
 
         EditorVisualConfig                  visual_config{};
         std::unique_ptr<ApplicationSidebar> sidebar{nullptr}; // Allows delayed initialization
         std::unique_ptr<Project>            project{nullptr};
         std::unique_ptr<D3D::D3D12>         d3d12_ctx{nullptr};
         std::unique_ptr<ogl::OpenGl>        ogl_ctx{nullptr};
+        std::unique_ptr<Injector>           injector{nullptr};
+        Dx12Talker                          dx_12_talker{};
         HeaderType                          header;
+        bool                                attempt_upload{false};
 
         friend class BasicButton;
     };

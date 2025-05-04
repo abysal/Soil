@@ -29,8 +29,8 @@ namespace D3D {
     public:
         D3D12();
 
-        D3D12(const D3D12 &) = delete;
-        D3D12(D3D12 &&)      = default;
+        D3D12(const D3D12&) = delete;
+        D3D12(D3D12&&)      = default;
 
         void upload_debug_texture() noexcept;
 
@@ -50,7 +50,7 @@ namespace D3D {
 
         void setup_shared_present() noexcept;
 
-        void copy_to_present(ID3D12Resource *source) noexcept;
+        void copy_to_present(ID3D12Resource* source) noexcept;
 
     private:
         DEBUG_ONLY(WRL::ComPtr<ID3D12Debug> debug_controller{nullptr};)
@@ -61,9 +61,9 @@ namespace D3D {
         WRL::ComPtr<ID3D12CommandAllocator>    alloc{nullptr};
         WRL::ComPtr<ID3D12GraphicsCommandList> list{nullptr};
         WRL::ComPtr<ID3D12Resource>            upload_buffer{nullptr};
-        u8                                    *buffer_start{nullptr};
-        u8                                    *buffer_cur{nullptr};
-        u8                                    *buffer_end{nullptr};
+        u8*                                    buffer_start{nullptr};
+        u8*                                    buffer_cur{nullptr};
+        u8*                                    buffer_end{nullptr};
         WRL::ComPtr<ID3D12Resource>            debug_texture{nullptr};
         WRL::ComPtr<ID3D12Resource>            staging_resource{nullptr};
         D3D12_RESOURCE_DESC                    present_texture_description{};

@@ -2,7 +2,11 @@
 #include "../types.hpp"
 #include "./clay_binding.hpp"
 #include "./components.hpp"
+#include <cstdlib>
+#include <exception>
 #include <stdexcept>
+#include <string_view>
+#include <utility>
 
 namespace raylib_renderer {
 #include "raylib.h"
@@ -11,6 +15,51 @@ namespace raylib_renderer {
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+
+    void CustomDrawTextEx(
+        Font font, std::string_view text, Vector2 position, float fontSize, float spacing,
+        Color tint
+    ) {
+        if (font.texture.id == 0)
+            font = GetFontDefault(); // Security check in case of not valid font
+
+        int size =
+            text.size(); // Total size in bytes of the text, scanned by codepoints in loop
+
+        float textOffsetY = 0;    // Offset between lines (on linebreak '\n')
+        float textOffsetX = 0.0f; // Offset X to next character to draw
+
+        float scaleFactor = fontSize / font.baseSize; // Character quad scaling factor
+
+        for (int i = 0; i < size;) {
+            // Get next codepoint from byte string and glyph index in font
+            int codepointByteCount = 0;
+            int codepoint          = GetCodepointNext(&text[i], &codepointByteCount);
+            int index              = GetGlyphIndex(font, codepoint);
+
+            if (codepoint == '\n') {
+                static int textLineSpacing = 2; // TODO change
+                // NOTE: Line spacing is a global variable, use SetTextLineSpacing() to setup
+                textOffsetY += (fontSize + textLineSpacing);
+                textOffsetX  = 0.0f;
+            } else {
+                if ((codepoint != ' ') && (codepoint != '\t')) {
+                    DrawTextCodepoint(
+                        font, codepoint,
+                        (Vector2){position.x + textOffsetX, position.y + textOffsetY}, fontSize,
+                        tint
+                    );
+                }
+
+                if (font.glyphs[index].advanceX == 0)
+                    textOffsetX += ((float)font.recs[index].width * scaleFactor + spacing);
+                else
+                    textOffsetX += ((float)font.glyphs[index].advanceX * scaleFactor + spacing);
+            }
+
+            i += codepointByteCount; // Move text bytes counter to next codepoint
+        }
+    }
 
 #define CLAY_RECTANGLE_TO_RAYLIB_RECTANGLE(rectangle)                                          \
     (Rectangle) {                                                                              \
@@ -79,7 +128,7 @@ namespace raylib_renderer {
     }
 
     Clay_Dimensions Raylib_MeasureText(
-        Clay_StringSlice text, Clay_TextElementConfig *config, void *userData
+        Clay_StringSlice text, Clay_TextElementConfig* config, void* userData
     ) noexcept {
         // Measure string size for Font
         Clay_Dimensions textSize = {0};
@@ -88,7 +137,7 @@ namespace raylib_renderer {
         float lineTextWidth = 0;
 
         float textHeight = config->fontSize;
-        Font *fonts      = (Font *)userData;
+        Font* fonts      = (Font*)userData;
         Font  fontToUse  = fonts[config->fontId];
         // Font failed to load, likely the fonts are in the wrong place relative to the
         // execution dir. RayLib ships with a default font, so we can continue with that built
@@ -122,7 +171,7 @@ namespace raylib_renderer {
     }
 
     void Clay_Raylib_Initialize(
-        int width, int height, const char *title, unsigned int flags
+        int width, int height, const char* title, unsigned int flags
     ) noexcept {
         SetConfigFlags(flags);
         InitWindow(width, height, title);
@@ -131,54 +180,32 @@ namespace raylib_renderer {
 
     // A MALLOC'd buffer, that we keep modifying inorder to save from so many Malloc and Free
     // Calls. Call Clay_Raylib_Close() to free
-    static char *temp_render_buffer     = NULL;
-    static int   temp_render_buffer_len = 0;
 
-    // Call after closing the window to clean up the render buffer
-    void Clay_Raylib_Close() noexcept {
-        if (temp_render_buffer) free(temp_render_buffer);
-        temp_render_buffer_len = 0;
-
-        CloseWindow();
-    }
-
-    void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font *fonts) noexcept {
+    void Clay_Raylib_Render(Clay_RenderCommandArray renderCommands, Font* fonts) noexcept {
         for (int j = 0; j < renderCommands.length; j++) {
-            Clay_RenderCommand *renderCommand = Clay_RenderCommandArray_Get(&renderCommands, j);
+            Clay_RenderCommand* renderCommand = Clay_RenderCommandArray_Get(&renderCommands, j);
             Clay_BoundingBox    boundingBox   = renderCommand->boundingBox;
             switch (renderCommand->commandType) {
             case CLAY_RENDER_COMMAND_TYPE_TEXT: {
-                Clay_TextRenderData *textData  = &renderCommand->renderData.text;
+                Clay_TextRenderData* textData  = &renderCommand->renderData.text;
                 Font                 fontToUse = fonts[textData->fontId];
 
-                int strlen = textData->stringContents.length + 1;
-
-                if (strlen > temp_render_buffer_len) {
-                    // Grow the temp buffer if we need a larger string
-                    if (temp_render_buffer) free(temp_render_buffer);
-                    temp_render_buffer     = (char *)malloc(strlen);
-                    temp_render_buffer_len = strlen;
-                }
-
-                // Raylib uses standard C strings so isn't compatible with cheap slices, we need
-                // to clone the string to append null terminator
-                memcpy(
-                    temp_render_buffer, textData->stringContents.chars,
-                    textData->stringContents.length
-                );
-                temp_render_buffer[textData->stringContents.length] = '\0';
-                DrawTextEx(
-                    fontToUse, temp_render_buffer, (Vector2){boundingBox.x, boundingBox.y},
-                    (float)textData->fontSize, (float)textData->letterSpacing,
+                // Modified version of raylibs drawing function, which allows non nullterm
+                // strings
+                CustomDrawTextEx(
+                    fontToUse,
+                    std::string_view{
+                        textData->stringContents.chars, (usize)textData->stringContents.length
+                    },
+                    (Vector2){boundingBox.x, boundingBox.y}, (float)textData->fontSize,
+                    (float)textData->letterSpacing,
                     CLAY_COLOR_TO_RAYLIB_COLOR(textData->textColor)
                 );
-
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
-                Texture2D imageTexture =
-                    *(Texture2D *)renderCommand->renderData.image.imageData;
-                Clay_Color tintColor = renderCommand->renderData.image.backgroundColor;
+                Texture2D imageTexture = *(Texture2D*)renderCommand->renderData.image.imageData;
+                Clay_Color tintColor   = renderCommand->renderData.image.backgroundColor;
                 if (tintColor.r == 0 && tintColor.g == 0 && tintColor.b == 0 &&
                     tintColor.a == 0) {
                     tintColor = (Clay_Color){255, 255, 255, 255};
@@ -202,7 +229,7 @@ namespace raylib_renderer {
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-                Clay_RectangleRenderData *config = &renderCommand->renderData.rectangle;
+                Clay_RectangleRenderData* config = &renderCommand->renderData.rectangle;
                 if (config->cornerRadius.topLeft > 0) {
                     float radius =
                         (config->cornerRadius.topLeft * 2) /
@@ -222,7 +249,7 @@ namespace raylib_renderer {
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_BORDER: {
-                Clay_BorderRenderData *config = &renderCommand->renderData.border;
+                Clay_BorderRenderData* config = &renderCommand->renderData.border;
                 // Left border
                 if (config->width.left > 0) {
                     DrawRectangle(
@@ -324,8 +351,8 @@ namespace raylib_renderer {
                 break;
             }
             case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {
-                Clay_CustomRenderData *config      = &renderCommand->renderData.custom;
-                CustomLayoutElement *customElement = (CustomLayoutElement *)config->customData;
+                Clay_CustomRenderData* config        = &renderCommand->renderData.custom;
+                CustomLayoutElement*   customElement = (CustomLayoutElement*)config->customData;
                 if (!customElement) continue;
                 switch (customElement->type) {
                 case CUSTOM_LAYOUT_ELEMENT_TYPE_3D_MODEL: {
@@ -356,8 +383,7 @@ namespace raylib_renderer {
                 break;
             }
             default: {
-                printf("Error: unhandled render command.");
-                exit(1);
+                std::terminate();
             }
             }
         }
@@ -367,7 +393,7 @@ namespace raylib_renderer {
 namespace clay_extension {
     void render_command_list(Clay_RenderCommandArray commands, std::span<Font> fonts) noexcept {
         for (usize index = 0; index < commands.length; index++) {
-            Clay_RenderCommand &command = commands.internalArray[index];
+            Clay_RenderCommand& command = commands.internalArray[index];
 
             if (command.commandType !=
                 Clay_RenderCommandType::CLAY_RENDER_COMMAND_TYPE_CUSTOM) {
@@ -377,7 +403,7 @@ namespace clay_extension {
                 continue;
             }
 
-            const auto *type = (ComponentType *)command.userData;
+            const auto* type = (ComponentType*)command.userData;
 
             if (*type == ComponentType::RAYLIB_3D_MODEL) {
                 raylib_render_command_passthrough(
@@ -387,12 +413,13 @@ namespace clay_extension {
             }
 
             if (*type == ComponentType::CUSTOM_VIRTUAL) {
-                const auto *data = (RenderComponentStore *)command.userData;
+                const auto* data = (RenderComponentStore*)command.userData;
 
                 data->component->on_render();
                 continue;
             }
 
+            std::unreachable();
             // This throw is fine since we want to kill the application anyway.
             // So its ok to just call std::terminate
             // NOLINTNEXTLINE

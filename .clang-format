@@ -40,7 +40,7 @@ IndentWidth: 4
 Language: Cpp
 # MaxEmptyLinesToKeep: 2
 # PackConstructorInitializers: CurrentLine
-# PointerAlignment: Left
+PointerAlignment: Left
 TabWidth: 4
 UseTab: Never
 SortIncludes: CaseSensitive

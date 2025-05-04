@@ -19,9 +19,9 @@
 
 static void log_handle_error(Clay_ErrorData data) { std::println("Error: {}", data.errorText); }
 
-// TODO:
+// TODO(Akashic):
 //      Implement a font manager which handles rendering text a million times better
-std::unique_ptr<Font> setup_basics(const char *window_title) noexcept {
+std::unique_ptr<Font> setup_basics(const char* window_title) noexcept {
     Clay_SetMaxElementCount(65535 * 32);
     raylib_renderer::Clay_Raylib_Initialize(
         512, 512, window_title, FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT | FLAG_WINDOW_MAXIMIZED
@@ -50,7 +50,7 @@ std::unique_ptr<Font> setup_basics(const char *window_title) noexcept {
     // to the constant memory. This function call will also never fail since we
     // know this TTF is valid. Also the fact this TTF file is entirely constexpr parsed is nuts
     constexpr soil::TTF file =
-        soil::TTF::from_data({const_cast<u8 *>(raw_hex.data()), raw_hex.size()});
+        soil::TTF::from_data({const_cast<u8*>(raw_hex.data()), raw_hex.size()});
 
     const auto font = LoadFontFromMemory(
         ".ttf", raw_hex.data(), raw_hex.size(), 15, nullptr, file.glyphs_count()
@@ -69,7 +69,13 @@ static void per_frame_clay_update() noexcept {
     const auto mouse = GetMousePosition();
 
     auto mouse_scroll_delta  = GetMouseWheelMoveV();
-    mouse_scroll_delta.y    *= 100;
+    mouse_scroll_delta.y    *= 20;
+
+    if (IsKeyDown(KEY_LEFT_CONTROL)) {
+        const auto temp      = mouse_scroll_delta.x;
+        mouse_scroll_delta.x = mouse_scroll_delta.y;
+        mouse_scroll_delta.y = temp;
+    }
 
     Clay_SetLayoutDimensions({static_cast<f32>(width), static_cast<f32>(height)});
 
@@ -82,18 +88,21 @@ static void per_frame_clay_update() noexcept {
     soil::ClayIdGenerator::instance().wipe();
 }
 
-void render_loop(std::function<void()> &&func, std::unique_ptr<Font> font) noexcept {
+void render_loop(std::function<void()>&& func, std::unique_ptr<Font> font) noexcept {
     while (!WindowShouldClose()) {
         per_frame_clay_update();
 
         Clay_BeginLayout();
         func();
+
         const auto commands = Clay_EndLayout();
 
         BeginDrawing();
-        ClearBackground(BLACK);
+        ClearBackground({0, 0, 0, 255});
         clay_extension::render_command_list(commands, std::span<Font>{font.get(), 1});
         EndDrawing();
+
+        clay_extension::CLAY_COPY_BUFFER.clear();
     }
 }
 
@@ -105,15 +114,15 @@ namespace clay_extension {
     }
 
     void raylib_render_command_passthrough(
-        Clay_RenderCommandArray renderCommands, Font *fonts
+        Clay_RenderCommandArray renderCommands, Font* fonts
     ) noexcept {
         raylib_renderer::Clay_Raylib_Render(renderCommands, fonts);
     }
 
     bool ButtonConfig::render_button(
         std::string_view text, Clay_ElementId id,
-        std::optional<std::function<void(const ButtonConfig &, std::string_view)>> &&callback,
-        bool                                                                         bare
+        std::optional<std::function<void(const ButtonConfig&, std::string_view)>>&& callback,
+        bool                                                                        bare
     ) const noexcept {
         const auto hovered = this->is_hovered(id);
         const auto config  = this->create_decleration(hovered, id);
@@ -137,7 +146,7 @@ namespace clay_extension {
     }
 
     Clay_ElementDeclaration
-    ButtonConfig::create_decleration(bool hovered, const Clay_ElementId &id) const noexcept {
+    ButtonConfig::create_decleration(bool hovered, const Clay_ElementId& id) const noexcept {
 
         const soil::Color color =
             (hovered) ? this->background_color * (this->hover_light_amount + 1.0f)
@@ -169,7 +178,7 @@ namespace clay_extension {
     }
 
     void
-    new_element(Clay_ElementDeclaration declaration, std::function<void()> &&inner) noexcept {
+    new_element(Clay_ElementDeclaration declaration, std::function<void()>&& inner) noexcept {
 
         if (declaration.id.id == 0) {
             declaration.id = soil::ClayIdGenerator::instance().new_id();

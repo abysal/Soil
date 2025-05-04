@@ -1,7 +1,9 @@
 #pragma once
-#include "../types.hpp"
-#include "Application/memory/pointer.hpp"
 #include "raywrapped.hpp"
+
+#include "../types.hpp"
+#include "Application/memory/fallback_allocator.hpp"
+#include "Application/memory/pointer.hpp"
 #include <clay.h>
 #include <cstdlib>
 #include <cstring>
@@ -10,11 +12,13 @@
 #include <optional>
 #include <string_view>
 
-std::unique_ptr<Font> setup_basics(const char *window_title) noexcept;
+std::unique_ptr<Font> setup_basics(const char* window_title) noexcept;
 
-void render_loop(std::function<void()> &&func, std::unique_ptr<Font> font) noexcept;
+void render_loop(std::function<void()>&& func, std::unique_ptr<Font> font) noexcept;
 
 namespace clay_extension {
+
+    inline soil::BlockAllocator<8192, 1> CLAY_COPY_BUFFER{};
 
     inline std::observer_ptr<Clay_TextElementConfig> text_config(Clay_TextElementConfig cfg
     ) noexcept {
@@ -22,7 +26,7 @@ namespace clay_extension {
     }
 
     void raylib_render_command_passthrough(
-        Clay_RenderCommandArray renderCommands, Font *fonts
+        Clay_RenderCommandArray renderCommands, Font* fonts
     ) noexcept;
 
     Clay_ElementId owner_id() noexcept;
@@ -59,7 +63,7 @@ namespace clay_extension {
         Clay_BorderElementConfig border;
         // A pointer that will be transparently passed through to resulting
         // render commands.
-        void *userData;
+        void* userData;
 
         ClayElementDeclarationPartial(Clay_ElementDeclaration decl) {
             this->layout          = decl.layout;
@@ -84,14 +88,17 @@ namespace clay_extension {
     }
 
     static inline Clay_String to_clay_last(const std::string_view string) noexcept {
-        char *ptr = (char *)malloc(string.length());
+        // char* ptr = (char*)malloc(string.length());
+
+        char* ptr = (char*)CLAY_COPY_BUFFER.allocate(string.length());
+
         memcpy(ptr, string.data(), string.length());
 
         return Clay_String{.length = (i32)string.length(), .chars = ptr};
     }
 
     void
-    new_element(Clay_ElementDeclaration declaration, std::function<void()> &&inner) noexcept;
+    new_element(Clay_ElementDeclaration declaration, std::function<void()>&& inner) noexcept;
 
     // Ripped *right* from clay
 
@@ -137,15 +144,15 @@ namespace clay_extension {
 
         [[nodiscard]] bool render_button(
             std::string_view text, Clay_ElementId id,
-            std::optional<std::function<void(const ButtonConfig &, std::string_view)>>
-                &&callback = std::nullopt,
-            bool  bare     = false
+            std::optional<std::function<void(const ButtonConfig&, std::string_view)>>&&
+                 callback = std::nullopt,
+            bool bare     = false
         ) const noexcept;
 
         [[nodiscard]] Clay_ElementDeclaration
-        create_decleration(bool hovered, const Clay_ElementId &id) const noexcept;
+        create_decleration(bool hovered, const Clay_ElementId& id) const noexcept;
 
-        [[nodiscard]] bool inline is_hovered(const Clay_ElementId &id) const noexcept {
+        [[nodiscard]] bool inline is_hovered(const Clay_ElementId& id) const noexcept {
             bool hovered = Clay_PointerOver(id);
             return hovered;
         }

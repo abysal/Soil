@@ -23,7 +23,7 @@ namespace D3D {
         }
     }
 
-    static HRESULT GetD3D12Addapter(IDXGIAdapter1 **adapter) {
+    static HRESULT GetD3D12Addapter(IDXGIAdapter1** adapter) {
 
         WRL::ComPtr<IDXGIFactory4> pFactory;
         HRESULT                    hr = CreateDXGIFactory1(IID_PPV_ARGS(&pFactory));
@@ -94,19 +94,19 @@ namespace D3D {
             return result;
         }
 
-        void *data;
+        void* data;
 
         CD3DX12_RANGE read_range(0, 0);
 
         this->upload_buffer->Map(0, &read_range, &data);
 
-        this->buffer_cur = this->buffer_start = reinterpret_cast<u8 *>(data);
+        this->buffer_cur = this->buffer_start = reinterpret_cast<u8*>(data);
         this->buffer_end                      = this->buffer_start + alloc_size;
         return 0;
     }
 
     usize D3D12::allocate(usize size, usize align) noexcept {
-        this->buffer_cur = (u8 *)this->align((usize)this->buffer_cur, (u32)align);
+        this->buffer_cur = (u8*)this->align((usize)this->buffer_cur, (u32)align);
 
         usize offset = this->buffer_cur - this->buffer_start;
 
@@ -119,7 +119,8 @@ namespace D3D {
 
     void D3D12::upload_debug_texture() noexcept {
 
-        Image debug_texture = GenImageGradientLinear(500, 500, 90, PINK, {255, 182, 30, 255});
+        Image debug_texture =
+            GenImageGradientLinear(500, 500, 90, {255, 182, 30, 255}, {255, 182, 30, 255});
 
         this->present_width = this->present_height = 500;
 
@@ -138,8 +139,8 @@ namespace D3D {
         };
 
         for (u32 y = 0; y < 500; y++) {
-            auto *line     = this->buffer_start + t2d.Offset + y * image_footprint.RowPitch;
-            u8   *img_data = (u8 *)debug_texture.data;
+            auto* line     = this->buffer_start + t2d.Offset + y * image_footprint.RowPitch;
+            u8*   img_data = (u8*)debug_texture.data;
             for (u32 x = 0; x < 500; x++) {
                 memcpy(
                     line + x * sizeof(DWORD), &(img_data[(y * 500 + x) * sizeof(DWORD)]),
@@ -188,7 +189,7 @@ namespace D3D {
         this->execute_command_list();
     }
 
-    void D3D12::copy_to_present(ID3D12Resource *source) noexcept {
+    void D3D12::copy_to_present(ID3D12Resource* source) noexcept {
         D3D12_RESOURCE_BARRIER source_bar = CD3DX12_RESOURCE_BARRIER::Transition(
             source, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_SOURCE
         );
@@ -204,10 +205,10 @@ namespace D3D {
         std::println("Executing Command List");
         this->list->Close();
 
-        ID3D12CommandQueue *cq    = this->queue.Get();
-        ID3D12CommandList  *cls[] = {this->list.Get()};
+        ID3D12CommandQueue* cq    = this->queue.Get();
+        ID3D12CommandList*  cls[] = {this->list.Get()};
 
-        ID3D12Fence *fence;
+        ID3D12Fence* fence;
 
         throw_on_fail(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
 

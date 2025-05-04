@@ -14,9 +14,11 @@
 #include "Application/components/folder_tree.hpp"
 #include "Application/project/project.hpp"
 #include "DirectXMagic/dx_creation.hpp"
+#include "clay/clay_binding.hpp"
 #include "clay/templates.hpp"
 #include "components/simple_button.hpp"
 #include "types.hpp"
+#include "windows/injector.hpp"
 #include <print>
 #include <tfd/tinyfiledialogs.h>
 
@@ -42,9 +44,9 @@ namespace soil {
                   .background_color = this->visual_config.header_color_base,
               },
               BasicButton(
-                  this->visual_config, "Open Project", "OpenProject",
+                  this->visual_config, "Open Project \u003D", "OpenProject",
                   [&] {
-                      const char *selected =
+                      const char* selected =
                           tinyfd_selectFolderDialog("Project Folder", nullptr);
 
                       if (!selected) {
@@ -54,31 +56,17 @@ namespace soil {
                       this->handle_project_change(selected);
                   }
               ),
-              BasicButton(this->visual_config, "Settings", "Settings", [&] {}),
-              BasicButton(
-                  this->visual_config, "DirectX12Debug", "dxdbg",
-                  [&] { this->d3d12_ctx->upload_debug_texture(); }
-              ),
-              BasicButton(
-                  this->visual_config, "Upload Opengl Debug", "ogl_debug",
-                  [&] {
-                      if (!this->ogl_ctx) {
-                          this->ogl_ctx =
-                              std::make_unique<ogl::OpenGl>(std::move(ogl::OpenGl{}));
-                      }
-
-                      this->ogl_ctx->load_test_texture();
-                  }
-              ),
-              BasicButton(
-                  this->visual_config, "Direct X to OpenGl", "ogl_dx",
-                  [&] { this->ogl_ctx->dx_to_ogl(this->d3d12_ctx.get()); }
-              )
+              BasicButton(this->visual_config, "Settings", "Settings", [&] {})
           )) {
         this->d3d12_ctx = std::make_unique<D3D::D3D12>(std::move(D3D::D3D12{}));
+        Clay_SetDebugModeEnabled(true);
     }
 
     void Application::render() noexcept {
+        if (this->dx_12_talker.ipc_created()) {
+            this->dx_12_talker.get_ipc().consumed_frame = true;
+        }
+
         constexpr Clay_Sizing layout = {
             .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_GROW(0)
         };
@@ -94,15 +82,15 @@ namespace soil {
             .backgroundColor = this->visual_config.base_color,
         }) {
             this->render_head_bar();
-            new_element({.layout.layoutDirection = CLAY_LEFT_TO_RIGHT}, [&] {
-                if (this->sidebar) {
-                    this->sidebar->render(this->visual_config);
+            new_element(
+                {.layout.layoutDirection = CLAY_LEFT_TO_RIGHT,
+                 .layout.sizing          = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()}},
+                [&] {
+                    if (this->sidebar) {
+                        this->sidebar->render(this->visual_config);
+                    }
                 }
-
-                if (this->ogl_ctx) {
-                    this->ogl_ctx->display_debug_texture();
-                }
-            });
+            );
         }
     }
 
@@ -135,7 +123,7 @@ namespace soil {
         );
     }
 
-    void Application::handle_project_change(const char *new_path) noexcept {
+    void Application::handle_project_change(const char* new_path) noexcept {
         std::filesystem::path path{new_path};
 
         Project project{std::move(path)};

@@ -28,7 +28,9 @@ using f32 = float;
 using f64 = double;
 #ifdef _DEBUG
 #define DEBUG_ONLY(...) __VA_ARGS__
+constexpr bool IS_DEBUG = true;
 #else
+constexpr bool IS_DEBUG = false;
 #define DEBUG_ONLY(...)
 #endif
 
@@ -77,7 +79,7 @@ namespace soil {
         T w;
 
         template <typename Self, typename U>
-        constexpr Self operator*(this const Self &self, U v) noexcept {
+        constexpr Self operator*(this const Self& self, U v) noexcept {
             if constexpr (std::is_floating_point<U>::value) {
                 return {
                     static_cast<T>(std::clamp(
@@ -124,13 +126,14 @@ namespace soil {
         }
 
         template <typename Self>
-        constexpr bool operator==(this const Self &self, const Self &o) noexcept {
+        constexpr bool operator==(this const Self& self, const Self& o) noexcept {
             return self.x == o.x && self.y == o.y && self.z == o.z && self.w == o.w;
         }
     };
 
     using Vec4i = Vector4Base<i32>;
     using Vec2i = Vector2Base<i32>;
+    using Vec2d = Vector2Base<double>;
 
     // Assumes that this is valid hex
     template <std::integral T> constexpr T from_hex(std::string_view str) noexcept {
@@ -215,18 +218,5 @@ namespace soil {
     };
 
 } // namespace soil
-
-namespace internal {
-    using namespace soil;
-    static inline void _compile_check() {
-        DynamicVariant<> variant;
-
-        const auto var = variant.add_type<i32>()
-                             .add_type<f32>()
-                             .add_type<std::string_view>()
-                             .add_type<f64>()
-                             .create_variant();
-    }
-} // namespace internal
 
 #endif // TYPES_HPP

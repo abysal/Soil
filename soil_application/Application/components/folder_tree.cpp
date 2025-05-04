@@ -1,4 +1,5 @@
 #include "./folder_tree.hpp"
+#include "clay/raywrapped.hpp"
 #include "clay/templates.hpp"
 #include "raylib.h"
 #include "types.hpp"
@@ -8,14 +9,14 @@
 
 using namespace soil;
 
-void FolderTree::render(const FolderTreeConfig &config) noexcept {
+void FolderTree::render(const FolderTreeConfig& config) noexcept {
     if (this->tree.expired()) {
         return;
     }
 
     auto ptr = this->tree.lock();
 
-    auto &root = ptr->root();
+    auto& root = ptr->root();
 
     usize indent_level = 0;
 
@@ -23,8 +24,8 @@ void FolderTree::render(const FolderTreeConfig &config) noexcept {
 
     usize ele_count = 0;
 
-    const std::function<void(FileNode &)> render_layer = std::function([&](FileNode &base) {
-        for (const auto &node : base.as_folder().children) {
+    const std::function<void(FileNode&)> render_layer = std::function([&](FileNode& base) {
+        for (const auto& node : base.as_folder().children) {
             usize offset = indent_level * config.indent_per_level;
 
             const bool deep_render =
@@ -36,47 +37,73 @@ void FolderTree::render(const FolderTreeConfig &config) noexcept {
                     hovered ? config.background_color * (1. + config.on_hover_lighten_amount)
                                  : config.background_color;
 
-                new_element(
-                    {
-                        .layout =
-                            {.padding = {0, 4, 0, 0},
-                             .sizing  = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}},
-                        .backgroundColor = color,
-                    },
-                    [&] {
-                        if (node->is_folder()) {
+                auto display_text = [&]() {
+                    new_element(
+                        {
+                            .layout =
+                                {.padding = {0, 4, 0, 0},
+                                 .sizing  = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}},
+                            .backgroundColor = color,
 
-                            auto txt_cfg = text_config(
-                                {.fontSize = config.font_size, .textColor = {255, 255, 255, 255}
-                                }
+                        },
+                        [&] {
+                            new_element(
+                                {.layout =
+                                     {.sizing =
+                                          {.width  = (f32)offset,
+                                           .height = (f32)config.node_height}}},
+                                [&] {}
                             );
 
-                            if (this->state.show(node->gash())) {
-                                CLAY_TEXT(CLAY_STRING("-"), txt_cfg.get());
-                            } else {
-                                CLAY_TEXT(CLAY_STRING("+"), txt_cfg.get());
+                            if (node->is_folder()) {
+
+                                auto txt_cfg = text_config(
+                                    {.fontSize  = config.font_size,
+                                     .textColor = {255, 255, 255, 255}}
+                                );
+
+                                if (this->state.show(node->gash())) {
+                                    CLAY_TEXT(CLAY_STRING("-"), txt_cfg.get());
+                                } else {
+                                    CLAY_TEXT(CLAY_STRING("+"), txt_cfg.get());
+                                }
                             }
+
+                            auto        name = node->full_name();
+                            Clay_String text = to_clay_last(name);
+
+                            Clay_TextElementConfig text_config = {
+                                .textColor = config.text_color,
+                                .fontSize  = config.font_size,
+                            };
+
+                            CLAY_TEXT(text, Clay__StoreTextElementConfig(text_config));
                         }
+                    );
+                };
 
-                        new_element(
-                            {.layout =
-                                 {.sizing =
-                                      {.width = (f32)offset, .height = (f32)config.node_height}}
-                            },
-                            [&] {}
-                        );
-
-                        auto        name = node->full_name();
-                        Clay_String text = to_clay_last(name);
-
-                        Clay_TextElementConfig text_config = {
-                            .textColor = config.text_color,
-                            .fontSize  = config.font_size,
-                        };
-
-                        CLAY_TEXT(text, Clay__StoreTextElementConfig(text_config));
-                    }
-                );
+                if (node->is_folder()) {
+                    new_element(
+                        {
+                            .layout.layoutDirection = CLAY_TOP_TO_BOTTOM,
+                            .layout.sizing          = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW()},
+                            .layout.childGap        = 0,
+                        },
+                        [&] {
+                            display_text();
+                            new_element(
+                                {
+                                    .layout
+                                        .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(1)},
+                                    .backgroundColor = config.outline_color,
+                                },
+                                [] {}
+                            );
+                        }
+                    );
+                } else {
+                    display_text();
+                }
 
                 if (hovered) {
                     this->handle_hover(owner_id(), node->gash());
@@ -96,13 +123,12 @@ void FolderTree::render(const FolderTreeConfig &config) noexcept {
             .id = config.id,
             .layout =
                 {
-                    .sizing          = {CLAY_SIZING_FIT(), CLAY_SIZING_GROW()},
+                    .sizing          = {CLAY_SIZING_GROW(), CLAY_SIZING_GROW()},
                     .padding         = {4, 4, 4, 4},
                     .layoutDirection = CLAY_TOP_TO_BOTTOM,
                 },
             .backgroundColor = config.background_color,
             .scroll          = {true, true},
-            //.border          = {.color = config.outline_color}},
         },
         [&] {
             // root will always be a folder, if it isn't there is major shit happening
