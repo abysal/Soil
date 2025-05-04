@@ -1,1 +1,2 @@
 Checks: '*, -readability-unused-include, -llvmlibc-*, -modernize-use-trailing-return-type, -bugprone-easily-swappable-parameters'
+readability-redundant-access-specifiers: false

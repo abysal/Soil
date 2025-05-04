@@ -1,7 +1,6 @@
 BasedOnStyle: LLVM
 AccessModifierOffset: -4
 AlignAfterOpenBracket: BlockIndent
-# AlignArrayOfStructures: Right
 AlignConsecutiveDeclarations:
   Enabled: true
   AcrossEmptyLines: false
@@ -12,41 +11,19 @@ AlignConsecutiveAssignments:
   AcrossComments: false
   AlignCompound: true
   PadOperators: true
-# AlignConsecutiveMacros:
-#   Enabled: true
-#   AcrossEmptyLines: false
-#   AcrossComments: true
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowAllArgumentsOnNextLine: true
-# AlignOperands: AlignAfterOperator
-# AlignConsecutiveBitFields:
-#   Enabled: true
-#   AcrossEmptyLines: false
-#   AcrossComments: false
 AllowShortLambdasOnASingleLine: All
 AllowShortBlocksOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 AllowShortLoopsOnASingleLine: true
-# AlwaysBreakAfterDefinitionReturnType: None
-# AlwaysBreakTemplateDeclarations: 'Yes'
-# BinPackArguments: false
-# BinPackParameters: false
-# BreakBeforeBraces: Custom
-# BreakBeforeBinaryOperators: NonAssignment
 ColumnLimit: 96
-# CommentPragmas: '^ IWYU pragma:'
-# ConstructorInitializerIndentWidth: 0
 IndentWidth: 4
 Language: Cpp
-# MaxEmptyLinesToKeep: 2
-# PackConstructorInitializers: CurrentLine
 PointerAlignment: Left
 TabWidth: 4
 UseTab: Never
 SortIncludes: CaseSensitive
-# # RemoveEmptyLinesInUnwrappedLines: true
-# RemoveSemicolon: true
-# # SeparateDefinitionBlocks: Always
-# SortUsingDeclarations: LexicographicNumeric
-# Standard: Latest
+SortUsingDeclarations: LexicographicNumeric
+Standard: Latest
 NamespaceIndentation: All

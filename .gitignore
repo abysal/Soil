@@ -5,3 +5,4 @@ build*
 .vscode
 *.code-workspace
 .vs
+vcpkg_installed
