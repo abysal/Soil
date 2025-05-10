@@ -1,0 +1,17 @@
+<template name="before" content="content">
+
+    <head>
+        <link type="text/css" href="../rml.rcss" />
+        <link type="text/css" href="../colors.rcss" />
+        <link type="text/css" href="settings.rcss" />
+    </head>
+
+    <body>
+
+        <div id="content"></div>
+        <div class="setting_before lighter">
+        </div>
+
+    </body>
+
+</template>

@@ -1,0 +1,32 @@
+.main_bg_color {
+    background-color: #1b2530;
+}
+
+.accent_color {
+    background-color: #332b47;
+}
+
+.dark_accent_color {
+    background-color: #211e2b;
+}
+
+.lighter {
+    background-color: #6b5d91;
+}
+
+.lighter_less {
+    background-color: #473e61;
+}
+
+.outline_dark_accent_color {
+    border-color: #211e2b;
+    border-width: 4dp;
+}
+
+.button_bg_color {
+    background-color: #4f4275;
+}
+
+.text_color {
+    color: #b5cece
+}

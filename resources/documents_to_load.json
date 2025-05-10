@@ -1,0 +1,6 @@
+{
+    "documents": {
+        "ui/main.rml": true,
+        "ui/settings/settings.rml": false
+    }
+}

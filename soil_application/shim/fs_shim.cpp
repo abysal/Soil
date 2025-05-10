@@ -16,18 +16,18 @@ namespace soil {
         // Add any preloaded assets
 
         // NOLINTNEXTLINE
-        char font[] = {
-#embed "../../resources/fonts/JetBrainsMonoNL-Regular.ttf"
-        };
+        //         char font[] = {
+        // #embed "../../resources/fonts/JetBrainsMonoNL-Regular.ttf"
+        //         };
 
-        this->baked_files["fonts/JetBrainsMonoNL-Regular.ttf"] =
-            std::span<char>(font, sizeof(font));
+        //         this->baked_files["fonts/JetBrainsMonoNL-Regular.ttf"] =
+        //             std::span<char>(font, sizeof(font));
 
-        char main[] = {
-#embed "../../resources/ui/main.rml"
-        };
+        //         char main[] = {
+        // #embed "../../resources/ui/main.rml"
+        //         };
 
-        this->baked_files["ui/main.rml"] = std::span<char>(font, sizeof(main));
+        //         this->baked_files["ui/main.rml"] = std::span<char>(font, sizeof(main));
     }
 
     size_t FilesystemShim::Read(void* out_buffer, size_t count, Rml::FileHandle handle) {

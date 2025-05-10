@@ -49,31 +49,45 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
                 -Wno-unused-parameter
                 -Wno-nullability-extension
                 -Wno-nullability-completeness
-                -Werror
                 -Wno-c23-extensions
+                -Wno-c++98-compat
+                -Wno-c++98-compat-pedantic
+                -Werror
+                -Wno-newline-eof
+                -Wno-shadow
+                -Wno-global-constructors
+                -Wno-exit-time-destructors
+                -Wno-missing-prototypes
+                -Wno-unused-macros
         )
+
 
         message(STATUS "Using Clang, throwing in all warnings")
 
         set_source_files_properties(
                 ${CMAKE_CURRENT_SOURCE_DIR}/external/tfd/tinyfiledialogs.c
                 PROPERTIES
-                COMPILE_FLAGS "-w"
+                COMPILE_FLAGS "-w -Wno-error"
         )
         set_source_files_properties(
                 ${CMAKE_CURRENT_SOURCE_DIR}/soil_application/rml_ui_backend/RmlUi_Renderer_GL3.cpp
                 PROPERTIES
-                COMPILE_FLAGS "-w"
+                COMPILE_FLAGS "-w -Wno-error"
         )
         set_source_files_properties(
                 ${CMAKE_CURRENT_SOURCE_DIR}/soil_application/rml_ui_backend/RmlUi_Platform_GLFW.cpp
                 PROPERTIES
-                COMPILE_FLAGS "-w"
+                COMPILE_FLAGS "-w -Wno-error"
+        )
+        set_source_files_properties(
+                ${CMAKE_CURRENT_SOURCE_DIR}/soil_application/rml_ui_backend/RmlUi_Backend_GLFW_GL3.cpp
+                PROPERTIES
+                COMPILE_FLAGS "-w -Wno-error"
         )
         set_source_files_properties(
                 ${CMAKE_CURRENT_SOURCE_DIR}/external/glad/glad.h
                 PROPERTIES
-                COMPILE_FLAGS "-w"
+                COMPILE_FLAGS "-w -Wno-error"
         )
 endif()
 
@@ -92,6 +106,10 @@ target_include_directories(SoilUi PUBLIC external)
 
 find_package(RmlUi CONFIG REQUIRED)
 target_link_libraries(SoilUi PUBLIC RmlUi::RmlUi)
+
+find_package(reflectcpp CONFIG REQUIRED)
+target_link_libraries(SoilUi PRIVATE reflectcpp::reflectcpp)
+
 file(COPY ${CMAKE_SOURCE_DIR}/resources
         DESTINATION ${CMAKE_BINARY_DIR}/)
 

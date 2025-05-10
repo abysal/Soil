@@ -1,0 +1,21 @@
+<template name="tree_view_folder" content="info">
+
+    <head>
+        <title>File</title>
+        <link type="text/css" href="../rml.rcss" />
+        <link type="text/css" href="../colors.rcss" />
+        <link type="text/css" href="../folder_view.rcss" />
+    </head>
+
+    <body>
+        <div>
+            <button class="file_row lighter_less">
+                <div class="folder_fillter">
+                    <p>+</p>
+                </div>
+                <span id="info"></span>
+            </button>
+        </div>
+
+    </body>
+</template>

@@ -1,0 +1,72 @@
+.settings_base_color {
+    background-color: #00000079;
+
+}
+
+body#settings_base {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
+}
+
+div#settings_window {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70%;
+    height: 80%;
+    border-radius: 30px;
+    padding: 0 20dp;
+
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.exit_button {
+
+    width: 8dp;
+    height: 8dp;
+    padding: 8dp;
+    margin: 8dp;
+    border-radius: 8dp;
+
+    align-items: center;
+    justify-content: flex-start;
+    display: flex;
+
+    margin-right: auto;
+}
+
+.setting_element {
+    filter: brightness(80%);
+    padding: 0 10dp;
+    margin-top: 10dp;
+    margin-bottom: 10dp;
+    border-radius: 5dp;
+
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+
+.setting_element p {
+    margin: .5em 0;
+}
+
+.setting_before {
+    align-self: stretch;
+    width: 4dp;
+    display: inline-block;
+
+    margin: 0 10dp;
+}
+
+.exit_button:hover {
+    filter: brightness(120%)
+}

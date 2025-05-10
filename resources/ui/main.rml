@@ -1,27 +1,46 @@
 <rml>
 
     <head>
-        <title>Example</title>
+        <title>Soil</title>
+        <link type="text/template" href="./menu/menu_bar.rml" />
+        <link type="text/template" href="./file_tree/file.rml" />
+        <link type="text/template" href="./file_tree/folder.rml" />
+        <link type="text/css" href="main_style.rcss" />
+        <link type="text/css" href="colors.rcss" />
+        <link type="text/css" href="folder_view.rcss" />
+        <!-- debug color -->
         <style>
             body {
-                position: absolute;
-                top: 50px;
-                left: 50px;
-                width: 500px;
-                height: 500px;
-                background-color: #ccc;
-            }
-
-            div {
-                display: block;
-                height: 150px;
-                width: 200px;
-                background-color: #f00;
+                color: #ff0080;
             }
         </style>
     </head>
 
-    <body>
-        <div />
+    <body id="host_render" data-model="core_ui" class="main_bg_color text_color">
+
+        <!-- Abuses the templating feature to have rml embed into this from another file for organization -->
+
+        <body template="menu_bar"></body>
+
+        <div class="file_tree accent_color outline_dark_accent_color"
+            data-style-width="str_cat(file_browser_width, '%')">
+
+            <div>
+
+                <body template="tree_view_file">
+                    <p>I am a file!</p>
+                </body>
+            </div>
+
+            <div>
+
+                <body template="tree_view_folder">
+                    <p>I am a folder!</p>
+                </body>
+            </div>
+
+        </div>
+
+
     </body>
 </rml>
