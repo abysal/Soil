@@ -1,8 +1,0 @@
-body#host_render {
-    width: 100vw;
-    height: 100vh;
-    z-index: -1;
-    margin: 0dp;
-    display: flex;
-    flex-direction: column;
-}

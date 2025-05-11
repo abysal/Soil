@@ -1,8 +1,9 @@
-cmake-*-*
-.idea
-build*
-.cache
+build
+_build
 .vscode
-*.code-workspace
 .vs
-vcpkg_installed
+.idea
+out
+CMakeSettings.json
+node_modules
+.cache

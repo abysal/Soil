@@ -11,7 +11,8 @@
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "CMAKE_C_COMPILER": "clang-cl.exe",
-                "CMAKE_CXX_COMPILER": "clang-cl.exe"
+                "CMAKE_CXX_COMPILER": "clang-cl.exe",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
             }
         },
         {
@@ -24,7 +25,22 @@
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "CMAKE_C_COMPILER": "clang-cl.exe",
-                "CMAKE_CXX_COMPILER": "clang-cl.exe"
+                "CMAKE_CXX_COMPILER": "clang-cl.exe",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
+            }
+        },
+        {
+            "name": "MSVC-Debug",
+            "displayName": "MSVC (MSVC CLI) - Debug",
+            "description": "MSVC with Debug",
+            // "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "cl.exe",
+                "CMAKE_CXX_COMPILER": "cl.exe",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
             }
         },
         {
@@ -37,7 +53,8 @@
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "CMAKE_C_COMPILER": "clang.exe",
-                "CMAKE_CXX_COMPILER": "clang.exe"
+                "CMAKE_CXX_COMPILER": "clang.exe",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
             }
         },
         {
@@ -50,7 +67,8 @@
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "CMAKE_C_COMPILER": "clang.exe",
-                "CMAKE_CXX_COMPILER": "clang.exe"
+                "CMAKE_CXX_COMPILER": "clang.exe",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
             }
         }
     ]

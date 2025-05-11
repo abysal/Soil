@@ -1,10 +1,15 @@
 {
-  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-  "dependencies": [
-    "freetype",
-    "glfw3",
-    "ms-gsl",
-    "rmlui",
-    "reflectcpp"
-  ]
+    "name": "nui-template",
+    "dependencies": [
+        {
+            "name": "boost",
+            "version>=": "1.86.0"
+        },
+        "openssl",
+        "cryptopp",
+        "curl",
+        "nlohmann-json",
+        "abseil",
+        "reflectcpp"
+    ]
 }
