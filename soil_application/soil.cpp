@@ -1,6 +1,8 @@
 #include "soil.hpp"
 #include "document/document_loader.hpp"
 #include "document/document_manager.hpp"
+#include "flag_manager/flag_manager.hpp"
+#include "fs_provider.hpp"
 #include "rml_extra/rml_functions.hpp"
 #include "rml_ui_backend/RmlUi_Backend.h"
 #include <GLFW/glfw3.h>
@@ -14,6 +16,8 @@
 #include <RmlUi/Debugger/Debugger.h>
 #include <cassert>
 #include <cstdio>
+#include <fstream>
+#include <memory>
 #include <print>
 
 #include <RmlUi/Core.h>
@@ -74,6 +78,8 @@ namespace soil {
 
         Rml::Debugger::SetVisible(true);
 
+        this->dx_12 = std::make_unique<D3D12>();
+
         this->main_loop();
     }
 
@@ -84,16 +90,64 @@ namespace soil {
 
         this->settings.bind_settings(model_builder);
 
+        model_builder.BindEventCallback("project_pressed", &Application::process_project, this);
+
         this->handle_list.push_back(model_builder.GetModelHandle());
     }
 
+    void Application::process_project(
+        Rml::DataModelHandle handle, class Rml::Event& event, const Rml::VariantList& args
+    ) {
+        (void)handle;
+        (void)event;
+        (void)args;
+
+        // TODO: Make this build on a background thread, use an std::future to resolve it. Then
+        // update on next update
+
+        auto provider = FsProvider::poll_user(this->context, this->settings, true);
+
+        if (!provider) {
+            return;
+        }
+
+        auto value = std::move(provider.value());
+
+        this->fs = std::make_shared<FsProvider>(std::move(value));
+
+        this->update_side_bar();
+    }
+
     static bool reload_ui = false;
+
+    void Application::update_side_bar() {
+
+        this->side_bar.update_fs(this->fs);
+
+        auto* doc = this->manager.get_doc_by_title("Soil");
+        assert(doc); // Main document not loaded
+
+        auto ele = doc->GetElementById("file_tree_container");
+
+        this->side_bar.render(*ele);
+    }
+
+    void Application::process() {
+        if (FlagManager::flag_manager().process_rebuild_tree()) {
+            this->update_side_bar();
+        }
+    }
 
     void Application::main_loop() {
         while (this->running) {
             this->running = Backend::ProcessEvents(this->context, &Application::process_key);
 
             // Call into our code
+
+            this->process();
+            if (this->dx_12) {
+                this->dx_12->flush_cq();
+            }
 
             // Tell the context it happened
             this->context->Update();
@@ -105,6 +159,7 @@ namespace soil {
             if (reload_ui) {
                 DocumentLoader{}.load_inital_documents(*this->context, this->shim);
                 reload_ui = false;
+                FlagManager::flag_manager().set_rebuild_tree();
             }
         }
     }
@@ -133,9 +188,25 @@ namespace soil {
             reload_ui = true;
 
             return false;
+        } else if (key == Rml::Input::KI_F7) {
+            for (int i = 0; i < context->GetNumDocuments(); i++) {
+                Rml::ElementDocument* document = context->GetDocument(i);
+
+                const Rml::String& src = document->GetSourceURL();
+
+                if (src.size() > 4 && src.substr(src.size() - 4) == ".rml") {
+                    const auto name = src.substr(src.find_last_of('/') + 1);
+
+                    std::ofstream rml_dump{name};
+
+                    rml_dump << document->GetInnerRML();
+
+                    rml_dump.close();
+                }
+            }
         }
 
-        if (key == Rml::Input::KI_F8) {
+        else if (key == Rml::Input::KI_F8) {
             Rml::Debugger::SetVisible(!Rml::Debugger::IsVisible());
 
             return false;

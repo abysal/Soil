@@ -5,6 +5,10 @@
     "glfw3",
     "ms-gsl",
     "rmlui",
-    "reflectcpp"
+    "reflectcpp",
+    "portable-file-dialogs",
+    "webview2",
+    "wil",
+    "directx-headers"
   ]
 }

@@ -2,7 +2,9 @@
     height: 100%;
     flex: 1;
     flex-direction: column;
-    overflow: auto;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: auto;
 }
 
 .directory_icon {
@@ -12,6 +14,7 @@
     padding: 8dp;
     margin: 8dp;
     border-radius: 3dp;
+    flex: 0 0 auto;
 
     align-items: center;
     justify-content: flex-start;
@@ -19,8 +22,8 @@
 
 .file_filler {
     height: 20dp;
-    width: 20dp;
     display: block;
+    flex: 0 0 auto;
     background-color: #0000;
 }
 
@@ -28,22 +31,29 @@
 .folder_filler {
     height: 100%;
     width: 20dp;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
     display: flex;
     background-color: #0000;
+    font-size: 20dp;
 }
 
 .file_row p {
     margin: .5em 0;
+    flex: 0 0 auto;
+    align-self: center;
 }
 
 .file_row {
     width: 100%;
+    height: 20dp;
     display: flex;
     flex-direction: row;
     margin-right: 4dp;
     overflow: hidden;
+    flex: 0 0 auto;
+    align-items: center;
 }
 
 

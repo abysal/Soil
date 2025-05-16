@@ -2,56 +2,82 @@
     "version": 9,
     "configurePresets": [
         {
-            "name": "Clang-CL-RelWithDebInfo",
-            "displayName": "Clang 19.1.1 (MSVC CLI) - Release with Debug Info",
-            "description": "Clang-CL with RelWithDebInfo",
+            "name": "RelWithDeb",
+            "displayName": "RelWithDeb",
+            "description": "RelWithDeb",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "VCPKG_TARGET_TRIPLET": "x64-windows-static",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "CMAKE_C_COMPILER": "clang-cl.exe",
-                "CMAKE_CXX_COMPILER": "clang-cl.exe"
-            }
-        },
-        {
-            "name": "Clang-CL-Debug",
-            "displayName": "Clang 19.1.1 (MSVC CLI) - Debug",
-            "description": "Clang-CL with Debug",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "CMAKE_C_COMPILER": "clang-cl.exe",
-                "CMAKE_CXX_COMPILER": "clang-cl.exe"
-            }
-        },
-        {
-            "name": "Clang-RelWithDebInfo",
-            "displayName": "Clang 19.1.1 (GNU CLI) - Release with Debug Info",
-            "description": "Clang with RelWithDebInfo",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "CMAKE_C_COMPILER": "clang.exe",
-                "CMAKE_CXX_COMPILER": "clang.exe"
-            }
-        },
-        {
-            "name": "Clang-Debug",
-            "displayName": "Clang 19.1.1 (GNU CLI) - Debug",
-            "description": "Clang with Debug",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "CMAKE_C_COMPILER": "clang.exe",
-                "CMAKE_CXX_COMPILER": "clang.exe"
+                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
+                "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded"
             }
         }
+//        {
+//            "name": "Clang-CL-Debug",
+//            "displayName": "Clang 19.1.1 (MSVC CLI) - Debug",
+//            "description": "Clang-CL with Debug",
+//            "generator": "Ninja",
+//            "binaryDir": "${sourceDir}/build",
+//            "cacheVariables": {
+//                "CMAKE_BUILD_TYPE": "Debug",
+//                "VCPKG_TARGET_TRIPLET": "x64-windows-static",
+//                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+//                "CMAKE_C_COMPILER": "clang-cl.exe",
+//                "CMAKE_CXX_COMPILER": "clang-cl.exe",
+//                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
+//                "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded"
+//            }
+//        },
+//        {
+//            "name": "Clang-RelWithDebInfo",
+//            "displayName": "Clang 19.1.1 (GNU CLI) - Release with Debug Info",
+//            "description": "Clang with RelWithDebInfo",
+//            "generator": "Ninja",
+//            "binaryDir": "${sourceDir}/build",
+//            "cacheVariables": {
+//                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+//                "VCPKG_TARGET_TRIPLET": "x64-windows-static",
+//                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+//                "CMAKE_C_COMPILER": "clang.exe",
+//                "CMAKE_CXX_COMPILER": "clang.exe",
+//                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
+//                "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded"
+//            }
+//        },
+//        {
+//            "name": "Clang-Rel",
+//            "displayName": "Clang 19.1.1 (GNU CLI) - Release",
+//            "description": "Clang with Rel",
+//            "generator": "Ninja",
+//            "binaryDir": "${sourceDir}/build",
+//            "cacheVariables": {
+//                "CMAKE_BUILD_TYPE": "Release",
+//                "VCPKG_TARGET_TRIPLET": "x64-windows-static",
+//                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+//                "CMAKE_C_COMPILER": "clang.exe",
+//                "CMAKE_CXX_COMPILER": "clang.exe",
+//                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
+//                "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded"
+//            }
+//        },
+//        {
+//            "name": "Clang-Debug",
+//            "displayName": "Clang 19.1.1 (GNU CLI) - Debug",
+//            "description": "Clang with Debug",
+//            "generator": "Ninja",
+//            "binaryDir": "${sourceDir}/build",
+//            "cacheVariables": {
+//                "CMAKE_BUILD_TYPE": "Debug",
+//                "VCPKG_TARGET_TRIPLET": "x64-windows-static",
+//                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+//                "CMAKE_C_COMPILER": "clang.exe",
+//                "CMAKE_CXX_COMPILER": "clang.exe",
+//                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
+//                "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded"
+//            }
+//        }
     ]
 }

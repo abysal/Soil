@@ -1,4 +1,5 @@
 #include "./folder_tree.hpp"
+#include "flag_manager/flag_manager.hpp"
 #include "settings.hpp"
 #include <RmlUi/Core/Box.h>
 #include <RmlUi/Core/Context.h>
@@ -16,10 +17,6 @@
 #include <stdexcept>
 
 namespace soil {
-    // TODO:
-    // Implement the generation of the folder tree
-    // Implement the handling of showing and hiding
-
     constexpr float ExpanderSize = 20.F;
 
     FSTree::FSTree(
@@ -39,61 +36,96 @@ namespace soil {
         for (const auto& info : iter) {
             const auto our_index = filesystem.size();
 
-            FileTreeNode node = {
-                .name          = info.path().filename().string(),
-                .is_visible    = true,
-                .depth         = our_depth,
-                .parent        = parent,
-                .raw_arr_index = our_index
-            };
+            try {
+                // TODO: Switch to a custom Wide char to UTF-8 on windows
+                FileTreeNode node = {
+                    .name          = info.path().filename().string(),
+                    .is_visible    = true,
+                    .depth         = our_depth,
+                    .parent        = parent,
+                    .raw_arr_index = our_index
+                };
 
-            this->filesystem.emplace_back(node);
+                this->filesystem.emplace_back(node);
 
-            // Tells our parent we exist
-            this->filesystem[parent].children().push_back(our_index);
+                // Tells our parent we exist
+                this->filesystem[parent].children().push_back(our_index);
 
-            if (!node.is_folder()) {
-                continue;
+                if (info.status().type() != std::filesystem::file_type::directory) {
+                    continue;
+                }
+
+                this->filesystem[our_index].folder_info = FileTreeNode::FolderInfo{};
+
+                this->scan_tree_inner(info.path(), our_index, our_depth);
+            } catch (std::runtime_error& err) {
+                Rml::Log::Message(Rml::Log::LT_ERROR, "%s", err.what());
             }
-
-            this->scan_tree_inner(info.path(), our_index, our_depth);
         }
     };
 
-    void FSTree::render_in_internal(
-        class Rml::Element& parent, uint32_t depth, size_t element_index
-    ) {}
+    void FSTree::Handler::ProcessEvent(class Rml::Event& /*dont care*/) {
+        assert(this->owner->filesystem[element_index].is_folder());
 
-    // Makes an element which roughly looks like
-    // <button class="file_row lighter_less">
-    //     <div class="file_filler" data-style-width=""></div>
-    //     <div class="folder_filler">
-    //         <p>+</p>
-    //     </div>
-    //     <span id="info"></span>
-    // </button>
+        auto& info = this->owner->filesystem[element_index].folder_info.value();
+
+        info.collapsed = !info.collapsed;
+
+        FlagManager::flag_manager().set_rebuild_tree();
+    }
+
+    void
+    FSTree::render_in_internal(Rml::Element& parent, uint32_t depth, size_t element_index) {
+
+        if (const auto& file = this->filesystem[element_index]; file.is_folder()) {
+
+            auto& folder = this->create_folder(file.name, depth, file.is_collapsed(), parent);
+            const auto& [collapsed, children] = file.folder_info.value();
+
+            const auto file_index = file.raw_arr_index;
+            auto*      fs_tree    = this;
+
+            folder.AddEventListener(Rml::EventId::Click, new Handler{fs_tree, file_index});
+
+            if (file.is_collapsed()) {
+                return;
+            }
+
+            for (const auto& child : children) {
+                this->render_in_internal(parent, depth + 1, child);
+            }
+
+        } else {
+            (void)this->create_file(file.name, depth, parent);
+        }
+    }
+
     class Rml::Element& FSTree::create_folder(
-        std::string&& name, uint32_t depth, bool expanded, class Rml::Element& parent
-    ) {
+        const std::string& name, uint32_t depth, bool expanded, class Rml::Element& parent
+    ) const {
 
         Rml::XMLAttributes attribs = {{"class", Rml::Variant{"file_row lighter_less"}}};
         auto button = Rml::Factory::InstanceElement(&parent, "*", "button", attribs);
 
-        auto*      button_ptr = parent.AppendChild(std::move(button));
-        const auto new_width  = this->settings.per_layer_gap * static_cast<float>(depth);
+        auto* button_ptr = parent.AppendChild(std::move(button));
 
-        button_ptr->AppendChild(Rml::Factory::InstanceElement(
-            button_ptr, "*", "div",
-            {{"class", Rml::Variant{"file_filler"}},
-             {"data-style-width", Rml::Variant{std::format("{}dp", new_width)}}}
-        ));
+        button_ptr->AppendChild(
+            Rml::Factory::InstanceElement(
+                button_ptr, "*", "div",
+                {{"class", Rml::Variant{"file_filler"}},
+                 {"data-style-width",
+                  Rml::Variant{std::format("str_cat(per_layer_gap * {}, 'dp')", depth)}}}
+            )
+        );
 
         button_ptr->AppendChild([&] {
             auto ele = Rml::Factory::InstanceElement(
                 button_ptr, "*", "div", {{"class", Rml::Variant{"folder_filler"}}}
             );
 
-            Rml::Factory::InstanceElementText(ele.get(), expanded ? "-" : "+");
+            Rml::Factory::InstanceElementText(
+                ele.get(), std::format("<p>{}</p>", expanded ? "+" : "-")
+            );
 
             return ele;
         }());
@@ -109,25 +141,23 @@ namespace soil {
         return *button_ptr;
     }
 
-    // Builds an element which represents the RML
-    // <button class="file_row lighter_less">
-    //     <div class="file_filler" data-style-width=""></div>
-    //     <span><p>FileName</p></span>
-    // </button>
     Rml::Element&
-    FSTree::create_file(std::string&& name, uint32_t depth, Rml::Element& parent) {
+    FSTree::create_file(const std::string& name, uint32_t depth, Rml::Element& parent) const {
         Rml::XMLAttributes attribs = {{"class", Rml::Variant{"file_row lighter_less"}}};
         auto button = Rml::Factory::InstanceElement(&parent, "*", "button", attribs);
 
-        auto*      button_ptr = parent.AppendChild(std::move(button));
-        const auto new_height =
-            this->settings.per_layer_gap * static_cast<float>(depth) + ExpanderSize;
+        auto* button_ptr = parent.AppendChild(std::move(button));
 
-        button_ptr->AppendChild(Rml::Factory::InstanceElement(
-            button_ptr, "*", "div",
-            {{"class", Rml::Variant{"file_filler"}},
-             {"data-style-width", Rml::Variant{std::format("{}dp", new_height)}}}
-        ));
+        button_ptr->AppendChild(
+            Rml::Factory::InstanceElement(
+                button_ptr, "*", "div",
+                {{"class", Rml::Variant{"file_filler"}},
+                 {"data-style-width",
+                  Rml::Variant{
+                      std::format("str_cat(per_layer_gap * {} + {}, 'dp')", depth, ExpanderSize)
+                  }}}
+            )
+        );
 
         button_ptr->AppendChild([&] {
             auto ele = Rml::Factory::InstanceElement(button_ptr, "*", "span", {});
@@ -140,7 +170,13 @@ namespace soil {
         return *button_ptr;
     }
 
-    void FSTree::render_in(Rml::Element& parent, Rml::ElementDocument& owner_document) {}
+    void FSTree::render_in(Rml::Element& parent) {
+
+        for (const auto& root = this->filesystem[0];
+             const auto& child : root.folder_info->children) {
+            this->render_in_internal(parent, 0, child);
+        }
+    }
 
     void FSTree::scan_tree() {
         FileTreeNode root = {
@@ -155,25 +191,6 @@ namespace soil {
         this->scan_tree_inner(this->scan_root, 0, 0);
     }
 
-    void FSTree::bind_data() {
-        auto ctor = this->owner->CreateDataModel("file_browser");
-
-        if (!ctor) {
-            throw std::runtime_error(std::format("Failed to create a file_browser model"));
-        }
-
-        if (auto handle = ctor.RegisterStruct<FileTreeNode>()) {
-            handle.RegisterMember("arr_index", &FileTreeNode::raw_arr_index);
-            handle.RegisterMember("is_folder", &FileTreeNode::is_folder);
-            handle.RegisterMember("collapsed", &FileTreeNode::is_collapsed);
-            handle.RegisterMember("visible", &FileTreeNode::is_visible);
-        }
-
-        if (!ctor.RegisterArray<decltype(this->filesystem)>()) {
-            Rml::Log::Message(Rml::Log::LT_WARNING, "Failed to register filesystem!");
-        }
-
-        ctor.Bind("files", &this->filesystem);
-    }
+    void FSTree::bind_data() {}
 
 } // namespace soil

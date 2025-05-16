@@ -48,8 +48,6 @@ namespace soil {
 
             auto output = std::accumulate(view.begin(), view.end(), std::string{});
 
-            Rml::Log::Message(Rml::Log::LT_INFO, "Formatted string %s", output.c_str());
-
             return Rml::Variant(std::move(output));
         })};
 

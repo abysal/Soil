@@ -1,4 +1,5 @@
 {
+    "comment": "The true and false specify if they should be shown by default. We only normally care about the main rml. This only exists like this to allow for extensions to mess with it",
     "documents": {
         "ui/main.rml": true,
         "ui/settings/settings.rml": false

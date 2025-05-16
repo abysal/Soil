@@ -6,3 +6,7 @@ build*
 *.code-workspace
 .vs
 vcpkg_installed
+node_modules
+./main.rml
+./settings.rml
+cmake-build-*

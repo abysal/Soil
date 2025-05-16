@@ -22,25 +22,10 @@
 
         <body template="menu_bar"></body>
 
-        <div class="file_tree accent_color outline_dark_accent_color"
+        <div class="file_tree accent_color outline_dark_accent_color" id="file_tree_container"
             data-style-width="str_cat(file_browser_width, '%')">
 
-            <div>
-
-                <body template="tree_view_file">
-                    <p>I am a file!</p>
-                </body>
-            </div>
-
-            <div>
-
-                <body template="tree_view_folder">
-                    <p>I am a folder!</p>
-                </body>
-            </div>
-
         </div>
-
 
     </body>
 </rml>

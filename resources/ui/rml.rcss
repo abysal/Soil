@@ -29,15 +29,44 @@ input.range {
 
 input.range slidertrack {
 	margin-top: 3dp;
+	background-color: #919191;
 
 }
 
 input.range sliderbar {
 	width: 34dp;
-	background-color: #FFF;
+	background-color: #51357e;
 	border-radius: 20dp;
 }
 
+scrollbarvertical {
+	width: 20dp;
+	background-color: #FFF;
+}
+
+scrollbarvertical sliderbar {
+	width: 20dp;
+	background-color: #000000;
+}
+
+scrollbarhorizontal {
+	height: 20dp;
+	background-color: #FFF;
+}
+
+scrollbarhorizontal sliderbar {
+	height: 20dp;
+	background-color: #000000;
+}
+
+scrollbarhorizontal slidertrack {
+	background-color: #FDD;
+}
+
+/* sliderbar {
+	background-color: #000;
+
+} */
 
 p {
 	display: block;
