@@ -29,6 +29,8 @@
 #ifndef RMLUI_BACKENDS_PLATFORM_GLFW_H
 #define RMLUI_BACKENDS_PLATFORM_GLFW_H
 
+#include <glad/glad.h>
+
 #include <RmlUi/Core/Input.h>
 #include <RmlUi/Core/SystemInterface.h>
 #include <RmlUi/Core/Types.h>

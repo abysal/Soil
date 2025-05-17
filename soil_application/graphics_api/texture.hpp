@@ -1,8 +1,9 @@
 #pragma once
-#include "rml_extra/gl_texture_element.hpp"
+#include <string>
 
 #include <RmlUi/Core/Types.h>
 #include <cstddef>
+#include <glm/fwd.hpp>
 #include <type_traits>
 #include <utility>
 #include <winrt/base.h>
@@ -29,6 +30,11 @@ namespace soil {
         uint32_t      width  = 0;
         uint32_t      height = 0;
         TextureFormat format = TextureFormat::RGBA8;
+
+        BaseTexture(
+            uint32_t width = 0, uint32_t height = 0, TextureFormat format = TextureFormat::RGBA8
+        )
+            : width(width), height(height), format(format) {}
     };
 
     class TextureHandle {
@@ -41,8 +47,8 @@ namespace soil {
 
         auto operator<=>(const TextureHandle&) const = default;
 
-        bool is_valid() const { return this->handle != 0; }
-
+        bool   is_valid() const { return this->handle != 0; }
+        void   drop() { this->handle = 0; }
         size_t get_handle() const { return this->handle; }
 
     private:
@@ -57,15 +63,16 @@ namespace soil {
         TextureLookup(TextureLookup&&) noexcept            = default;
         TextureLookup& operator=(TextureLookup&&) noexcept = default;
 
-        std::optional<std::reference_wrapper<TextureType>>
-        find(const OglTextureHandle handle) const {
+        std::optional<std::reference_wrapper<const TextureType>>
+        find(const HandleType handle) const {
             return this->operator[](handle);
         }
 
-        std::optional<std::reference_wrapper<TextureType>> operator[](const HandleType handle
-        ) const {
-            if (this->map.contains(handle)) {
-                return this->map[handle];
+        std::optional<std::reference_wrapper<const TextureType>>
+        operator[](const HandleType handle) const {
+            auto it = this->map.find(handle);
+            if (it != this->map.end()) {
+                return std::cref(it->second);
             }
             return std::nullopt;
         }
@@ -85,7 +92,7 @@ namespace soil {
             const uint32_t width = 0, const uint32_t height = 0, std::byte* data = nullptr,
             const TextureFormat format = TextureFormat::RGBA8
         )
-            : width(width), height(height), format(format), data(data) {}
+            : BaseTexture(width, height, format), data(data) {}
 
         ApiTexture(const ApiTexture&)            = delete;
         ApiTexture& operator=(const ApiTexture&) = delete;
@@ -96,17 +103,9 @@ namespace soil {
             this->format = other.format;
         }
         ApiTexture& operator=(ApiTexture&&) = default;
-        ~ApiTexture() {
-            if (this->data) delete[] this->data;
-        }
+        ~ApiTexture() { delete[] this->data; }
     };
 
-    ApiTexture gradient(uint32_t width, uint32_t height, Rml::Colourb start, Rml::Colourb end);
+    ApiTexture gradient(uint32_t width, uint32_t height, glm::u8vec4 start, glm::u8vec4 end);
 
 } // namespace soil
-
-template <> struct std::hash<soil::TextureHandle> {
-    size_t operator()(const soil::TextureHandle& handle) const noexcept {
-        return handle.get_handle();
-    }
-}; // namespace std

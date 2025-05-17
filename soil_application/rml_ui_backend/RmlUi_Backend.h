@@ -29,6 +29,8 @@
 #ifndef RMLUI_BACKENDS_BACKEND_H
 #define RMLUI_BACKENDS_BACKEND_H
 
+#include <glad/glad.h>
+
 #include <GLFW/glfw3.h>
 #include <RmlUi/Core/Input.h>
 #include <RmlUi/Core/RenderInterface.h>

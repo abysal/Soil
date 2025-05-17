@@ -18,7 +18,9 @@ set(SOURCE_FILES
         soil_application/rml_extra/gl_texture_element.cpp
         soil_application/rml_extra/gl_texture_element.hpp
         soil_application/graphics_api/ogl.cpp
-        soil_application/graphics_api/ogl.hpp)
+        soil_application/graphics_api/ogl.hpp
+        soil_application/rml_extra/ogl_instancer.cpp
+        soil_application/rml_extra/ogl_instancer.hpp)
 
 file(GLOB_RECURSE SOURCE_FILES_REST CONFIGURE_DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/soil_application/*.hpp
@@ -105,6 +107,9 @@ target_link_libraries(Soil PUBLIC Freetype::Freetype)
 
 find_package(Microsoft.GSL CONFIG REQUIRED)
 target_link_libraries(Soil PUBLIC Microsoft.GSL::GSL)
+
+find_package(glm CONFIG REQUIRED)
+target_link_libraries(Soil PRIVATE glm::glm)
 
 add_executable(SoilUi main.cpp)
 target_include_directories(SoilUi PUBLIC external)

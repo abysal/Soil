@@ -3,14 +3,14 @@
 #include "document/document_manager.hpp"
 #include "fs_provider.hpp"
 #include "graphics_api/dx12.hpp"
-#include "rml_ui_backend/RmlUi_Backend.h"
+#include "graphics_api/ogl.hpp"
+#include "rml_extra/ogl_instancer.hpp"
 #include "settings.hpp"
 #include "shim/fs_shim.hpp"
 #include "side_bar/side_bar.hpp"
 #include <RmlUi/Core.h>
 #include <RmlUi/Core/Context.h>
 #include <RmlUi/Core/DataModelHandle.h>
-#include <RmlUi/Core/ElementDocument.h>
 #include <RmlUi/Core/Types.h>
 
 namespace Rml {
@@ -18,6 +18,8 @@ namespace Rml {
 }
 
 namespace soil {
+    class OglInstancer;
+    class OGL;
     void run();
 
     class Application {
@@ -65,6 +67,8 @@ namespace soil {
         FsProviderPtr                     fs          = {};
         SideBar                           side_bar    = {};
         std::unique_ptr<D3D12>            dx_12       = {};
+        OGL                               open_gl     = {};
+        std::unique_ptr<OglInstancer>     instancer   = {};
 
         friend struct RmlBinder;
         friend struct SoilSettings;

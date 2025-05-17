@@ -9,6 +9,7 @@
     "portable-file-dialogs",
     "webview2",
     "wil",
-    "directx-headers"
+    "directx-headers",
+    "glm"
   ]
 }

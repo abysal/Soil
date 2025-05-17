@@ -3,8 +3,6 @@
 #include <RmlUi/Core/Context.h>
 #include <RmlUi/Core/DataTypes.h>
 #include <RmlUi/Core/Log.h>
-#include <RmlUi/Core/StringUtilities.h>
-#include <RmlUi/Core/TypeConverter.h>
 #include <RmlUi/Core/Variant.h>
 #include <numeric>
 #include <ranges>

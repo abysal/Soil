@@ -2,12 +2,12 @@
 
     <head>
         <title>Soil</title>
-        <link type="text/template" href="./menu/menu_bar.rml" />
-        <link type="text/template" href="./file_tree/file.rml" />
-        <link type="text/template" href="./file_tree/folder.rml" />
-        <link type="text/css" href="main_style.rcss" />
-        <link type="text/css" href="colors.rcss" />
-        <link type="text/css" href="folder_view.rcss" />
+        <link type="text/template" href="./menu/menu_bar.rml"/>
+        <link type="text/template" href="./file_tree/file.rml"/>
+        <link type="text/template" href="./file_tree/folder.rml"/>
+        <link type="text/css" href="main_style.rcss"/>
+        <link type="text/css" href="colors.rcss"/>
+        <link type="text/css" href="folder_view.rcss"/>
         <!-- debug color -->
         <style>
             body {
@@ -18,14 +18,16 @@
 
     <body id="host_render" data-model="core_ui" class="main_bg_color text_color">
 
-        <!-- Abuses the templating feature to have rml embed into this from another file for organization -->
+    <!-- Abuses the templating feature to have rml embed into this from another file for organization -->
 
-        <body template="menu_bar"></body>
+    <body template="menu_bar"></body>
 
-        <div class="file_tree accent_color outline_dark_accent_color" id="file_tree_container"
-            data-style-width="str_cat(file_browser_width, '%')">
+    <div class="file_tree accent_color outline_dark_accent_color" id="file_tree_container"
+         data-style-width="str_cat(file_browser_width, '%')">
 
-        </div>
+    </div>
+
+    <opengl texture="debug"></opengl>
 
     </body>
 </rml>

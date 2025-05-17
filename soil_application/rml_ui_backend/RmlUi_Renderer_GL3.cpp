@@ -36,7 +36,7 @@
 #include <RmlUi/Core/Platform.h>
 #include <RmlUi/Core/SystemInterface.h>
 #include <algorithm>
-#include <string.h>
+#include <cstring>
 
 #if defined RMLUI_PLATFORM_WIN32_NATIVE
 // function call missing argument list
@@ -71,7 +71,8 @@
 #define RMLUI_STRINGIFY(x) RMLUI_STRINGIFY_IMPL(x)
 
 #define RMLUI_SHADER_HEADER                                                                    \
-    RMLUI_SHADER_HEADER_VERSION "#define MAX_NUM_STOPS " RMLUI_STRINGIFY(MAX_NUM_STOPS         \
+    RMLUI_SHADER_HEADER_VERSION "#define MAX_NUM_STOPS " RMLUI_STRINGIFY(                      \
+        MAX_NUM_STOPS                                                                          \
     ) "\n#line " RMLUI_STRINGIFY(__LINE__) "\n"
 
 static const char* shader_vert_main    = RMLUI_SHADER_HEADER R"(
@@ -216,8 +217,8 @@ void main() {
 )";
 
 static const char* shader_vert_passthrough  = RMLUI_SHADER_HEADER R"(
-in vec2 inPosition;
-in vec2 inTexCoord0;
+ in vec2 inPosition;
+ in vec2 inTexCoord0;
 
 out vec2 fragTexCoord;
 
@@ -269,7 +270,8 @@ void main() {
 )";
 
 #define RMLUI_SHADER_BLUR_HEADER                                                               \
-    RMLUI_SHADER_HEADER "\n#define BLUR_SIZE " RMLUI_STRINGIFY(BLUR_SIZE                       \
+    RMLUI_SHADER_HEADER "\n#define BLUR_SIZE " RMLUI_STRINGIFY(                                \
+        BLUR_SIZE                                                                              \
     ) "\n#define BLUR_NUM_WEIGHTS " RMLUI_STRINGIFY(BLUR_NUM_WEIGHTS)
 
 static const char* shader_vert_blur        = RMLUI_SHADER_BLUR_HEADER R"(
@@ -320,19 +322,6 @@ void main() {
 }
 )";
 
-enum class ProgramId {
-    None,
-    Color,
-    Texture,
-    Gradient,
-    Creation,
-    Passthrough,
-    ColorMatrix,
-    BlendMask,
-    Blur,
-    DropShadow,
-    Count,
-};
 enum class VertShaderId {
     Main,
     Passthrough,
@@ -768,23 +757,29 @@ static const ProgramDefinition program_definitions[] = {
 
     static void BindTexture(const FramebufferData& fb) {
         if (!fb.color_tex_buffer) {
-            RMLUI_ERRORMSG("Only framebuffers with color textures can be bound as textures. "
-                           "This framebuffer probably uses multisampling which needs a "
-                           "blit step first.");
+            RMLUI_ERRORMSG(
+                "Only framebuffers with color textures can be bound as textures. "
+                "This framebuffer probably uses multisampling which needs a "
+                "blit step first."
+            );
         }
 
         glBindTexture(GL_TEXTURE_2D, fb.color_tex_buffer);
     }
 
     static bool CreateShaders(ProgramData& data) {
-        RMLUI_ASSERT(std::all_of(
-            data.vert_shaders.begin(), data.vert_shaders.end(),
-            [](auto&& value) { return value == 0; }
-        ));
-        RMLUI_ASSERT(std::all_of(
-            data.frag_shaders.begin(), data.frag_shaders.end(),
-            [](auto&& value) { return value == 0; }
-        ));
+        RMLUI_ASSERT(
+            std::all_of(
+                data.vert_shaders.begin(), data.vert_shaders.end(),
+                [](auto&& value) { return value == 0; }
+            )
+        );
+        RMLUI_ASSERT(
+            std::all_of(
+                data.frag_shaders.begin(), data.frag_shaders.end(),
+                [](auto&& value) { return value == 0; }
+            )
+        );
         RMLUI_ASSERT(std::all_of(data.programs.begin(), data.programs.end(), [](auto&& value) {
             return value == 0;
         }));
@@ -2080,6 +2075,10 @@ void RenderInterface_GL3::UseProgram(ProgramId program_id) {
         if (program_id != ProgramId::None) glUseProgram(program_data->programs[program_id]);
         active_program = program_id;
     }
+}
+
+unsigned RenderInterface_GL3::GetProgram(const ProgramId program_id) const {
+    return program_data->programs[program_id];
 }
 
 int RenderInterface_GL3::GetUniformLocation(UniformId uniform_id) const {

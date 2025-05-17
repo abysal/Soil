@@ -5,23 +5,21 @@
 #include "fs_provider.hpp"
 #include "rml_extra/rml_functions.hpp"
 #include "rml_ui_backend/RmlUi_Backend.h"
-#include <GLFW/glfw3.h>
 #include <RmlUi/Core/Core.h>
 #include <RmlUi/Core/DataModelHandle.h>
 #include <RmlUi/Core/ElementDocument.h>
 #include <RmlUi/Core/Input.h>
 #include <RmlUi/Core/Log.h>
 #include <RmlUi/Core/StyleTypes.h>
-#include <RmlUi/Debugger.h>
 #include <RmlUi/Debugger/Debugger.h>
 #include <cassert>
 #include <cstdio>
 #include <fstream>
+#include <glm/vec4.hpp>
 #include <memory>
 #include <print>
 
 #include <RmlUi/Core.h>
-#include <RmlUi/Core/RenderInterface.h>
 
 namespace soil {
 
@@ -93,6 +91,15 @@ namespace soil {
         model_builder.BindEventCallback("project_pressed", &Application::process_project, this);
 
         this->handle_list.push_back(model_builder.GetModelHandle());
+
+        this->instancer = std::make_unique<OglInstancer>(&this->open_gl);
+
+        Rml::Factory::RegisterElementInstancer("opengl", instancer.get());
+
+        this->open_gl.lookup.upload_texture(
+            OglTextureHandle("debug"),
+            this->open_gl.load_texture(gradient(300, 300, {20, 30, 1, 255}, {200, 1, 255, 255}))
+        );
     }
 
     void Application::process_project(
