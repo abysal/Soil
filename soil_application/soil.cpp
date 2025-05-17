@@ -132,7 +132,9 @@ namespace soil {
         this->side_bar.update_fs(this->fs);
 
         auto* doc = this->manager.get_doc_by_title("Soil");
-        assert(doc); // Main document not loaded
+        if (!doc) {
+            return;
+        }
 
         auto ele = doc->GetElementById("file_tree_container");
 

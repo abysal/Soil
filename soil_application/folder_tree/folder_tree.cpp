@@ -172,6 +172,10 @@ namespace soil {
 
     void FSTree::render_in(Rml::Element& parent) {
 
+        if (this->filesystem.empty()) {
+            return;
+        }
+
         for (const auto& root = this->filesystem[0];
              const auto& child : root.folder_info->children) {
             this->render_in_internal(parent, 0, child);

@@ -9,9 +9,10 @@ namespace soil {
     }
 
     void SideBar::render() {
-        if (!this->fs_parent) {
+        if (!this->fs_parent || !this->current_fs) {
             return; // Must mean the element we wanted to use is gone. This will happen if the
                     // bar is hidden for example, or state is reloaded
+                    // this handles the case of a user never selecting a folder
         }
 
         auto& root = *this->fs_parent;
