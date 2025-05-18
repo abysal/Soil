@@ -12,7 +12,9 @@ Rml::ElementPtr soil::OglInstancer::InstanceElement(
     if (tag == "opengl") {
         return Rml::ElementPtr(new GLTextureElement(this->ogl_renderer));
     }
-    throw std::logic_error("Invalid tag: " + tag);
+
+    Rml::Log::Message(Rml::Log::LT_ERROR, "Invalid element: %s", tag);
+    return nullptr;
 }
 
 void soil::OglInstancer::ReleaseElement(Rml::Element* element) { delete element; }
