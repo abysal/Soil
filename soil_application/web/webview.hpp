@@ -15,7 +15,7 @@ namespace soil {
     public:
         WebView(HWND dx_11_hwnd);
 
-        void update();
+        void updat e();
 
     private:
         void init_web_view(ICoreWebView2Controller* controller);
