@@ -9,7 +9,7 @@
     <body>
     <!-- data-style-height="top_bar_height" -->
     <div class="menu_bar_inner accent_color">
-        <div id="menu_bar_content" data-style-height="str_cat(top_bar_height, 'px')">
+        <div id="menu_bar_content" data-style-height="str_cat(top_bar_height, 'dp')">
             <button class="menu_bar_button button_bg_color" data-event-click="settings_pressed">
                 <p>Settings</p>
             </button>

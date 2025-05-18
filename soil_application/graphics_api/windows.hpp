@@ -10,16 +10,16 @@
 
 namespace soil {
 
-    class HResultError : std::runtime_error {
+    class HResultError : public std::runtime_error {
     public:
-        HResultError(const winrt::hresult result)
+        explicit HResultError(const winrt::hresult result)
             : std::runtime_error(hr_as_string(result)), result(result) {}
 
         static std::string hr_as_string(winrt::hresult result) {
             return std::format("0x{:x}", result.value);
         }
 
-        winrt::hresult value() const noexcept { return this->result; }
+        [[nodiscard]] winrt::hresult value() const noexcept { return this->result; }
 
     private:
         winrt::hresult result = {};

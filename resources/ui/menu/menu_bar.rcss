@@ -15,7 +15,8 @@
     align-items: center;
     justify-content: flex-start;
     transform: scale(1.0);
-    transition: transform 0.05s
+    transition: transform 0.05s;
+    font-size: 12dp;
 }
 
 .menu_bar_button:hover {
@@ -25,7 +26,7 @@
 }
 
 
-.menu_bar_inner>div {
+.menu_bar_inner > div {
     display: flex;
     flex-direction: row;
     align-items: center;

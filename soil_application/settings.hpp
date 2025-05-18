@@ -15,14 +15,8 @@ namespace soil {
         float top_bar_height{30};
         float file_browser_width{15};
         float per_layer_gap{20};
-
-        Rml::Variant get_member(const std::string& name) {
-            if (name == "top_bar_height") {
-                return Rml::Variant{this->top_bar_height};
-            } else {
-                throw std::invalid_argument(std::format("Unknown member read: {}", name));
-            }
-        }
+        float ui_scale{1};
+        float ui_scale_change_speed{0.01};
 
         void bind_callbacks(Rml::Context& context, class DocumentManager& manager);
         void bind_settings(Rml::DataModelConstructor& model_builder);

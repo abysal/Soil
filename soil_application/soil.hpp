@@ -58,17 +58,19 @@ namespace soil {
         void update_side_bar();
 
     private:
-        SimpleShim                        shim        = {};
-        Rml::Context*                     context     = nullptr;
-        SoilSettings                      settings    = {};
-        std::vector<Rml::DataModelHandle> handle_list = {};
-        bool                              running     = true;
-        DocumentManager                   manager     = {};
-        FsProviderPtr                     fs          = {};
-        SideBar                           side_bar    = {};
-        std::unique_ptr<D3D12>            dx_12       = {};
-        OGL                               open_gl     = {};
-        std::unique_ptr<OglInstancer>     instancer   = {};
+        SimpleShim                        shim              = {};
+        Rml::Context*                     context           = nullptr;
+        SoilSettings                      settings          = {};
+        std::vector<Rml::DataModelHandle> handle_list       = {};
+        bool                              running           = true;
+        bool                              selecting_project = false;
+        float                             remaining_scale   = 0;
+        DocumentManager                   manager           = {};
+        FsProviderPtr                     fs                = {};
+        SideBar                           side_bar          = {};
+        std::unique_ptr<D3D12>            dx_12             = {};
+        OGL                               open_gl           = {};
+        std::unique_ptr<OglInstancer>     instancer         = {};
 
         friend struct RmlBinder;
         friend struct SoilSettings;

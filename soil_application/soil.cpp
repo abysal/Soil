@@ -3,6 +3,7 @@
 #include "document/document_manager.hpp"
 #include "flag_manager/flag_manager.hpp"
 #include "fs_provider.hpp"
+#include "graphics_api/windows.hpp"
 #include "rml_extra/rml_functions.hpp"
 #include "rml_ui_backend/RmlUi_Backend.h"
 #include <RmlUi/Core/Core.h>
@@ -76,7 +77,13 @@ namespace soil {
 
         Rml::Debugger::SetVisible(true);
 
-        this->dx_12 = std::make_unique<D3D12>();
+        try {
+            this->dx_12 = std::make_unique<D3D12>();
+        } catch (HResultError& error) {
+            Rml::Log::Message(
+                Rml::Log::LT_WARNING, "Failed to initialize D3D12: %s", error.what()
+            );
+        }
 
         this->main_loop();
     }
@@ -98,7 +105,7 @@ namespace soil {
 
         this->open_gl.lookup.upload_texture(
             OglTextureHandle("debug"),
-            this->open_gl.load_texture(gradient(300, 300, {20, 30, 1, 255}, {200, 1, 255, 255}))
+            OGL::load_texture(gradient(300, 300, {20, 30, 1, 255}, {200, 1, 255, 255}))
         );
     }
 
@@ -109,6 +116,11 @@ namespace soil {
         (void)event;
         (void)args;
 
+        if (this->selecting_project) {
+            return;
+        }
+
+        this->selecting_project = true;
         // TODO: Make this build on a background thread, use an std::future to resolve it. Then
         // update on next update
 
@@ -123,6 +135,8 @@ namespace soil {
         this->fs = std::make_shared<FsProvider>(std::move(value));
 
         this->update_side_bar();
+
+        this->selecting_project = false;
     }
 
     static bool reload_ui = false;
@@ -136,7 +150,7 @@ namespace soil {
             return;
         }
 
-        auto ele = doc->GetElementById("file_tree_container");
+        const auto ele = doc->GetElementById("file_tree_container");
 
         this->side_bar.render(*ele);
     }
@@ -144,6 +158,54 @@ namespace soil {
     void Application::process() {
         if (FlagManager::flag_manager().process_rebuild_tree()) {
             this->update_side_bar();
+        }
+
+        if (FlagManager::flag_manager().process_increase_ui_size()) {
+            if (this->remaining_scale < 0.0) this->remaining_scale = 0;
+            this->remaining_scale += .10;
+        }
+
+        if (FlagManager::flag_manager().process_decrease_ui_size()) {
+            if (this->remaining_scale > 0.0) this->remaining_scale = 0;
+
+            this->remaining_scale -= .10;
+        }
+
+        const auto apply_operation = [this]() -> std::function<void(float)> {
+            if (this->remaining_scale > 0.0) {
+                return [&](const float abs_value) {
+                    const auto current       = this->remaining_scale;
+                    this->remaining_scale   -= abs_value;
+                    const auto after         = this->remaining_scale;
+                    this->settings.ui_scale += abs_value;
+
+                    if (current > 0.0 && after < 0.0) {
+                        this->remaining_scale = 0;
+                    }
+                };
+            }
+            return [&](const float abs_value) {
+                const auto current       = this->remaining_scale;
+                this->remaining_scale   += abs_value;
+                const auto after         = this->remaining_scale;
+                this->settings.ui_scale -= abs_value;
+
+                if (current < 0.0 && after > 0.0) {
+                    this->remaining_scale = 0;
+                }
+            };
+        }();
+
+        if (this->remaining_scale != 0) {
+            apply_operation(this->settings.ui_scale_change_speed);
+
+            this->context->SetDensityIndependentPixelRatio(this->settings.ui_scale);
+        }
+
+        if (this->settings.ui_scale < 0.0) {
+            this->remaining_scale   = 0;
+            this->settings.ui_scale = 0;
+            this->context->SetDensityIndependentPixelRatio(this->settings.ui_scale);
         }
     }
 
@@ -154,6 +216,7 @@ namespace soil {
             // Call into our code
 
             this->process();
+
             if (this->dx_12) {
                 this->dx_12->flush_cq();
             }
@@ -213,12 +276,14 @@ namespace soil {
                     rml_dump.close();
                 }
             }
-        }
-
-        else if (key == Rml::Input::KI_F8) {
+        } else if (key == Rml::Input::KI_F8) {
             Rml::Debugger::SetVisible(!Rml::Debugger::IsVisible());
 
             return false;
+        } else if (key == Rml::Input::KI_P && key_modifier & Rml::Input::KM_CTRL) {
+            FlagManager::flag_manager().set_increase_ui_size();
+        } else if (key == Rml::Input::KI_O && key_modifier & Rml::Input::KM_CTRL) {
+            FlagManager::flag_manager().set_decrease_ui_size();
         }
 
         return true;

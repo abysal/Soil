@@ -14,6 +14,8 @@
 namespace soil {
     struct FlagManager {
         FLAG(rebuild_tree)
+        FLAG(increase_ui_size)
+        FLAG(decrease_ui_size)
 
         static FlagManager& flag_manager() {
             static FlagManager manager{};
