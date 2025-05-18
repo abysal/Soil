@@ -64,7 +64,6 @@ namespace soil {
         std::vector<Rml::DataModelHandle> handle_list       = {};
         bool                              running           = true;
         bool                              selecting_project = false;
-        float                             remaining_scale   = 0;
         DocumentManager                   manager           = {};
         FsProviderPtr                     fs                = {};
         SideBar                           side_bar          = {};

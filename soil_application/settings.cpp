@@ -48,5 +48,8 @@ namespace soil {
         model_builder.Bind("top_bar_height", &this->top_bar_height);
         model_builder.Bind("file_browser_width", &this->file_browser_width);
         model_builder.Bind("per_layer_gap", &this->per_layer_gap);
+        model_builder.Bind("ui_scale", &this->ui_scale);
+        model_builder.Bind("ui_scale_change_speed", &this->ui_scale_change_speed);
+        model_builder.Bind("ui_delta", &this->ui_delta);
     }
 } // namespace soil

@@ -161,49 +161,49 @@ namespace soil {
         }
 
         if (FlagManager::flag_manager().process_increase_ui_size()) {
-            if (this->remaining_scale < 0.0) this->remaining_scale = 0;
-            this->remaining_scale += .10;
+            if (this->settings.ui_delta < 0.0) this->settings.ui_delta = 0;
+            this->settings.ui_delta += .10;
         }
 
         if (FlagManager::flag_manager().process_decrease_ui_size()) {
-            if (this->remaining_scale > 0.0) this->remaining_scale = 0;
+            if (this->settings.ui_delta > 0.0) this->settings.ui_delta = 0;
 
-            this->remaining_scale -= .10;
+            this->settings.ui_delta -= .10;
         }
 
         const auto apply_operation = [this]() -> std::function<void(float)> {
-            if (this->remaining_scale > 0.0) {
+            if (this->settings.ui_delta > 0.0) {
                 return [&](const float abs_value) {
-                    const auto current       = this->remaining_scale;
-                    this->remaining_scale   -= abs_value;
-                    const auto after         = this->remaining_scale;
+                    const auto current       = this->settings.ui_delta;
+                    this->settings.ui_delta -= abs_value;
+                    const auto after         = this->settings.ui_delta;
                     this->settings.ui_scale += abs_value;
 
                     if (current > 0.0 && after < 0.0) {
-                        this->remaining_scale = 0;
+                        this->settings.ui_delta = 0;
                     }
                 };
             }
             return [&](const float abs_value) {
-                const auto current       = this->remaining_scale;
-                this->remaining_scale   += abs_value;
-                const auto after         = this->remaining_scale;
+                const auto current       = this->settings.ui_delta;
+                this->settings.ui_delta += abs_value;
+                const auto after         = this->settings.ui_delta;
                 this->settings.ui_scale -= abs_value;
 
                 if (current < 0.0 && after > 0.0) {
-                    this->remaining_scale = 0;
+                    this->settings.ui_delta = 0;
                 }
             };
         }();
 
-        if (this->remaining_scale != 0) {
+        if (this->settings.ui_delta != 0) {
             apply_operation(this->settings.ui_scale_change_speed);
 
             this->context->SetDensityIndependentPixelRatio(this->settings.ui_scale);
         }
 
         if (this->settings.ui_scale < 0.0) {
-            this->remaining_scale   = 0;
+            this->settings.ui_delta = 0;
             this->settings.ui_scale = 0;
             this->context->SetDensityIndependentPixelRatio(this->settings.ui_scale);
         }
