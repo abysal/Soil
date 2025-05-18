@@ -3,7 +3,7 @@
 
 namespace soil {
     struct RmlBinder {
-        void bind_simple(Rml::DataModelConstructor& context, class Application& owner);
+        static void bind_simple(Rml::DataModelConstructor& context, class Application& owner);
     };
 
 } // namespace soil
