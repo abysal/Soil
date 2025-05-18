@@ -21,6 +21,10 @@
             <button class="menu_bar_button button_bg_color" data-event-click="dx_12">
                 <p>Debug Dx12</p>
             </button>
+
+            <button class="menu_bar_button button_bg_color" data-event-click="dx_11">
+                <p>Open Dx11 Window</p>
+            </button>
         </div>
     </div>
     </body>

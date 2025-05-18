@@ -29,7 +29,7 @@ namespace soil {
         uint32_t element_buffer_object = {std::numeric_limits<uint32_t>::max()};
         int32_t  vertex_render_count   = {-1};
 
-        void unload() {
+        void unload() const {
             glDeleteVertexArrays(1, &this->vertex_array_object);
             glDeleteBuffers(1, &this->vertex_buffer_object);
             glDeleteBuffers(1, &this->element_buffer_object);
@@ -38,13 +38,11 @@ namespace soil {
 
 } // namespace soil
 
-namespace std {
-    template <> struct hash<soil::OglTextureHandle> {
-        size_t operator()(const soil::OglTextureHandle& handle) const noexcept {
-            return static_cast<size_t>(handle.get_handle());
-        }
-    };
-} // namespace std
+template <> struct std::hash<soil::OglTextureHandle> {
+    size_t operator()(const soil::OglTextureHandle& handle) const noexcept {
+        return static_cast<size_t>(handle.get_handle());
+    }
+}; // namespace std
 
 namespace soil {
     class OGL {
