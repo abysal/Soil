@@ -193,8 +193,6 @@ namespace soil {
     } // namespace soil
 
     void D3D12::flush_cq() {
-        Rml::Log::Message(Rml::Log::LT_INFO, "Executing command queue");
-
         throw_on_fail(this->command_list->Close());
 
         auto*              command_queue = this->command_queue.get();
