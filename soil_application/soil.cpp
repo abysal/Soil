@@ -65,6 +65,10 @@ namespace soil {
             Rml::Style::FontWeight::Normal, true
         );
 
+        this->dx_11 = std::make_unique<D3D11>(true);
+
+        this->web_view = std::make_unique<WebView>(this->dx_11->window_hwnd());
+
         this->bind_core();
 
         DocumentLoader{}.load_inital_documents(*this->context, this->shim);
@@ -97,6 +101,15 @@ namespace soil {
 
         model_builder.BindEventCallback("project_pressed", &Application::process_project, this);
 
+        model_builder.BindEventCallback(
+            "dx_11",
+            [&](Rml::DataModelHandle, Rml::Event&, const Rml::VariantList&) {
+                if (this->dx_11) {
+                    this->dx_11->new_window();
+                }
+            }
+        );
+
         this->handle_list.push_back(model_builder.GetModelHandle());
 
         this->instancer = std::make_unique<OglInstancer>(&this->open_gl);
@@ -107,6 +120,14 @@ namespace soil {
             OglTextureHandle("debug"),
             OGL::load_texture(gradient(300, 300, {20, 30, 1, 255}, {200, 1, 255, 255}))
         );
+
+        if (this->dx_11) {
+            this->dx_11->upload_texture_from_cpu(
+                gradient(300, 300, {20, 30, 1, 255}, {200, 1, 255, 255}), "debug"
+            );
+
+            this->dx_11->set_as_render_texture(D11TextureHandle("debug"));
+        }
     }
 
     void Application::process_project(
@@ -213,12 +234,18 @@ namespace soil {
         while (this->running) {
             this->running = Backend::ProcessEvents(this->context, &Application::process_key);
 
+            this->web_view->update();
+
             // Call into our code
 
             this->process();
 
             if (this->dx_12) {
                 this->dx_12->flush_cq();
+            }
+
+            if (this->dx_11) {
+                this->dx_11->update();
             }
 
             // Tell the context it happened

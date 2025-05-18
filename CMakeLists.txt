@@ -111,14 +111,24 @@ target_link_libraries(Soil PUBLIC Microsoft.GSL::GSL)
 find_package(glm CONFIG REQUIRED)
 target_link_libraries(Soil PRIVATE glm::glm)
 
+find_package(directxtk CONFIG REQUIRED)
+target_link_libraries(Soil PRIVATE Microsoft::DirectXTK)
+
+target_link_libraries(Soil PUBLIC d3d11 dxgi)
+
 add_executable(SoilUi main.cpp)
 target_include_directories(SoilUi PUBLIC external)
 
 find_package(RmlUi CONFIG REQUIRED)
 target_link_libraries(SoilUi PUBLIC RmlUi::RmlUi)
 
+target_link_libraries(SoilUi PUBLIC d3d11 dxgi)
+
 find_package(reflectcpp CONFIG REQUIRED)
 target_link_libraries(SoilUi PRIVATE reflectcpp::reflectcpp)
+
+find_package(unofficial-webview2 CONFIG REQUIRED)
+target_link_libraries(Soil PRIVATE unofficial::webview2::webview2)
 
 find_package(directx-headers CONFIG REQUIRED)
 target_link_libraries(SoilUi PRIVATE Microsoft::DirectX-Headers)

@@ -35,6 +35,10 @@ namespace soil {
             uint32_t width = 0, uint32_t height = 0, TextureFormat format = TextureFormat::RGBA8
         )
             : width(width), height(height), format(format) {}
+
+        size_t bytes_per_pixel() const {
+            return 4; // TODO: Make this select based on the format
+        }
     };
 
     class TextureHandle {

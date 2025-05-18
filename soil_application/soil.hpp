@@ -2,12 +2,15 @@
 #include "./rml_ui_backend/RmlUi_Backend.h"
 #include "document/document_manager.hpp"
 #include "fs_provider.hpp"
+#include "graphics_api/dx11.hpp"
 #include "graphics_api/dx12.hpp"
 #include "graphics_api/ogl.hpp"
 #include "rml_extra/ogl_instancer.hpp"
 #include "settings.hpp"
 #include "shim/fs_shim.hpp"
 #include "side_bar/side_bar.hpp"
+#include "web/webview.hpp"
+
 #include <RmlUi/Core.h>
 #include <RmlUi/Core/Context.h>
 #include <RmlUi/Core/DataModelHandle.h>
@@ -68,8 +71,10 @@ namespace soil {
         FsProviderPtr                     fs                = {};
         SideBar                           side_bar          = {};
         std::unique_ptr<D3D12>            dx_12             = {};
+        std::unique_ptr<D3D11>            dx_11             = {};
         OGL                               open_gl           = {};
         std::unique_ptr<OglInstancer>     instancer         = {};
+        std::unique_ptr<WebView>          web_view          = {};
 
         friend struct RmlBinder;
         friend struct SoilSettings;
