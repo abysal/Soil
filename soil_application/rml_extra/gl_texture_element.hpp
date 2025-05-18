@@ -28,7 +28,7 @@ namespace soil {
         void OnRender() override;
 
     private:
-        void load_handle();
+        bool load_handle();
 
         void free_texture();
 

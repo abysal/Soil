@@ -8,7 +8,9 @@
 
 namespace soil {
     bool GLTextureElement::GetIntrinsicDimensions(Rml::Vector2f& dimensions, float& ratio) {
-        load_handle();
+        if (!load_handle()) {
+            return false;
+        }
         const float dp_ratio = Rml::ElementUtilities::GetDensityIndependentPixelRatio(this);
         const auto& texture  = this->gl->lookup.find(this->handle).value().get();
 
@@ -25,7 +27,7 @@ namespace soil {
         this->dimension *= this->dimension_scale;
 
         dimensions = std::bit_cast<Rml::Vector2f>(this->dimension);
-        ratio      = dp_ratio;
+        ratio = this->dimension_scale = dp_ratio;
 
         return true;
     }
@@ -35,7 +37,7 @@ namespace soil {
         bool dirty = false;
 
         if (changed_attributes.find("texture") != changed_attributes.end()) {
-            dirty               = true;
+            // dirty               = true;
             this->dirty_texture = true;
         }
 
@@ -52,33 +54,38 @@ namespace soil {
 
     void GLTextureElement::OnRender() {
         if (this->dirty_geo) this->build_geo();
-        this->load_handle();
+        if (!this->load_handle()) {
+            return;
+        }
 
         this->gl->draw_texture(this->mesh, this->handle);
     }
 
-    void GLTextureElement::load_handle() {
+    bool GLTextureElement::load_handle() {
         if (!this->dirty_texture) {
-            return;
+            return true;
         }
         this->dirty_texture = false;
 
         const auto texture_id = this->GetAttribute<std::string>("texture", "");
 
         if (texture_id.empty()) {
-            return;
+            this->dirty_texture = true;
+            return false;
         }
 
         const auto handle = this->gl->lookup.find(OglTextureHandle(texture_id));
 
         if (!handle.has_value()) {
-            return;
+            this->dirty_texture = true;
+            return false;
         }
 
         const float dp_ratio  = Rml::ElementUtilities::GetDensityIndependentPixelRatio(this);
         this->dimension_scale = dp_ratio;
 
         this->handle = OglTextureHandle(texture_id);
+        return true;
     }
 
     // NOLINTNEXTLINE
