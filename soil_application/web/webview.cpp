@@ -38,7 +38,7 @@ namespace soil {
                             [&](HRESULT                             result,
                                 ICoreWebView2CompositionController* controller) -> HRESULT {
                                 throw_on_fail(result);
-                                this->init_web_view(controller); // Your handler
+                                this->init_web_view(controller);
                                 return S_OK;
                             }
                         ).Get()
