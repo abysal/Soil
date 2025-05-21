@@ -94,7 +94,6 @@ namespace soil {
                 Rml::Log::LT_WARNING, "Failed to initialize D3D12: %s", error.what()
             );
         }
-
         this->main_loop();
     }
 
@@ -134,37 +133,45 @@ namespace soil {
 
             this->dx_11->set_as_render_texture(D11TextureHandle("debug"));
         }
+
+        this->setup_listeners();
+    }
+    void Application::setup_listeners() {
+
+        this->process_queue.listen<FsProviderSelectedFolder>(
+            [&](FsProviderSelectedFolder& provider) {
+                if (provider.provider) {
+                    this->fs =
+                        std::make_shared<FsProvider>(std::move(provider.provider.value()));
+                    this->update_side_bar();
+                }
+
+                this->selecting_project = false;
+            }
+        );
     }
 
+    // Params can't be const since it causes signature issues
+    // No line makes it so clion doesn't yell at me ^w^
     void Application::process_project(
+        // NOLINTNEXTLINE
         Rml::DataModelHandle handle, class Rml::Event& event, const Rml::VariantList& args
     ) {
         (void)handle;
         (void)event;
         (void)args;
 
-        if (this->selecting_project) {
+        if (this->selecting_project.exchange(true)) {
             return;
         }
 
-        this->selecting_project = true;
-        // TODO: Make this build on a background thread, use an std::future to resolve it. Then
-        // update on next update
-
-        auto provider = FsProvider::poll_user(this->context, this->settings, true);
-
-        if (!provider) {
-            this->selecting_project = false;
-            return;
-        }
-
-        auto value = std::move(provider.value());
-
-        this->fs = std::make_shared<FsProvider>(std::move(value));
-
-        this->update_side_bar();
-
-        this->selecting_project = false;
+        this->process_queue.spawn_job<FsProviderSelectedFolder>(
+            [&]() -> FsProviderSelectedFolder {
+                return FsProviderSelectedFolder{
+                    .provider = FsProvider::poll_user(this->context, this->settings, true)
+                };
+            }
+        );
     }
 
     static bool reload_ui = false;
@@ -240,6 +247,7 @@ namespace soil {
     void Application::main_loop() {
         while (this->running) {
             this->running = Backend::ProcessEvents(this->context, &Application::process_key);
+            this->process_queue.tick();
 
             this->web_view->update();
 

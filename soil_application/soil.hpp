@@ -5,6 +5,7 @@
 #include "graphics_api/dx11.hpp"
 #include "graphics_api/dx12.hpp"
 #include "graphics_api/ogl.hpp"
+#include "process_queue/process_queue.hpp"
 #include "rml_extra/ogl_instancer.hpp"
 #include "settings.hpp"
 #include "shim/fs_shim.hpp"
@@ -42,12 +43,11 @@ namespace soil {
 
         void bind_core();
 
+        void setup_listeners();
+
         void main_loop();
 
         void process();
-
-        // using KeyDownCallback = bool (*)(Rml::Context* context, Rml::Input::KeyIdentifier
-        // key, int key_modifier, float native_dp_ratio, bool priority);
 
         static bool process_key(
             Rml::Context* context, Rml::Input::KeyIdentifier key, int key_modifier,
@@ -61,12 +61,13 @@ namespace soil {
         void update_side_bar();
 
     private:
+        ProcessQueue                      process_queue     = {};
         SimpleShim                        shim              = {};
         Rml::Context*                     context           = nullptr;
         SoilSettings                      settings          = {};
         std::vector<Rml::DataModelHandle> handle_list       = {};
         bool                              running           = true;
-        bool                              selecting_project = false;
+        std::atomic_bool                  selecting_project = false;
         DocumentManager                   manager           = {};
         FsProviderPtr                     fs                = {};
         SideBar                           side_bar          = {};

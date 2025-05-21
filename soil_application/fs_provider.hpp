@@ -32,5 +32,9 @@ namespace soil {
         FSTree tree;
     };
 
+    struct FsProviderSelectedFolder {
+        std::optional<FsProvider> provider{};
+    };
+
     using FsProviderPtr = std::shared_ptr<FsProvider>;
 } // namespace soil
