@@ -127,6 +127,14 @@ target_link_libraries(SoilUi PUBLIC d3d11 dxgi)
 find_package(reflectcpp CONFIG REQUIRED)
 target_link_libraries(SoilUi PRIVATE reflectcpp::reflectcpp)
 
+find_path(BSHOSHANY_THREAD_POOL_INCLUDE_DIRS "BS_thread_pool.hpp")
+target_include_directories(Soil PRIVATE ${BSHOSHANY_THREAD_POOL_INCLUDE_DIRS})
+
+find_package(eventpp CONFIG REQUIRED)
+target_link_libraries(Soil PRIVATE eventpp::eventpp)
+find_path(EVENTPP_INCLUDE_DIR eventpp/eventqueue.h)
+include_directories(${EVENTPP_INCLUDE_DIR})
+
 find_package(unofficial-webview2 CONFIG REQUIRED)
 target_link_libraries(Soil PRIVATE unofficial::webview2::webview2)
 

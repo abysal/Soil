@@ -11,6 +11,8 @@
     "wil",
     "directx-headers",
     "glm",
-    "directxtk"
+    "directxtk",
+    "bshoshany-thread-pool",
+    "eventpp"
   ]
 }
