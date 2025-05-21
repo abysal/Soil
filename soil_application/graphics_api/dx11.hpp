@@ -3,6 +3,7 @@
 #include "texture.hpp"
 
 #include <d3d11.h>
+#include <dcomp.h>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <winrt/base.h>
@@ -65,7 +66,7 @@ template <> struct std::hash<soil::D11TextureHandle> {
 namespace soil {
     class D3D11 {
     public:
-        explicit D3D11(bool init_window);
+        explicit D3D11(bool init_window, const HWND main_window);
         D3D11(const D3D11&) = delete;
         D3D11(D3D11&&)      = default;
 
@@ -74,14 +75,35 @@ namespace soil {
 
         void upload_texture_from_cpu(const ApiTexture& texture, const std::string& name);
 
-        HWND window_hwnd() const;
-
-    public:
-        D11TextureLookup texture_lookup{};
+        [[nodiscard]] HWND window_hwnd() const;
 
         void set_as_render_texture(const D11TextureHandle handle);
 
         void new_window();
+
+        [[nodiscard]] winrt::com_ptr<IDCompositionVisual> fetch_visual_root() const {
+            return this->root_visual;
+        }
+
+        [[nodiscard]] winrt::com_ptr<ID3D11Device>        get_device() const { return device; }
+        [[nodiscard]] winrt::com_ptr<ID3D11DeviceContext> get_device_context() const {
+            return device_context;
+        }
+        [[nodiscard]] winrt::com_ptr<IDXGIDevice> get_dxgi_device() const {
+            return dxgi_device;
+        }
+        [[nodiscard]] winrt::com_ptr<IDCompositionDevice> get_dcomposition_device() const {
+            return dcomposition_device;
+        }
+        [[nodiscard]] winrt::com_ptr<IDCompositionVisual> get_root_visual() const {
+            return root_visual;
+        }
+        [[nodiscard]] winrt::com_ptr<IDCompositionTarget> get_composition_target() const {
+            return composition_target;
+        }
+
+    public:
+        D11TextureLookup texture_lookup{};
 
     private:
         struct Vertex {
@@ -99,6 +121,10 @@ namespace soil {
         static_assert(sizeof(Vertex) == 16);
 
     private:
+        void draw_active_mesh() const;
+
+        void init_direct_composition();
+
         void create_debug_window();
 
         void load_shaders();
@@ -128,7 +154,7 @@ namespace soil {
             GLFWwindow* window = nullptr;
             glm::ivec2  size{800, 600};
 
-            winrt::com_ptr<IDXGISwapChain>         swap_chain{};
+            winrt::com_ptr<IDXGISwapChain1>        swap_chain{};
             winrt::com_ptr<ID3D10Blob>             error_blob{};
             winrt::com_ptr<ID3D10Blob>             vertex_blob{};
             winrt::com_ptr<ID3D11PixelShader>      pixel_shader{};
@@ -158,6 +184,10 @@ namespace soil {
 
         winrt::com_ptr<ID3D11Device>        device{};
         winrt::com_ptr<ID3D11DeviceContext> device_context{};
+        winrt::com_ptr<IDXGIDevice>         dxgi_device{};
+        winrt::com_ptr<IDCompositionDevice> dcomposition_device{};
+        winrt::com_ptr<IDCompositionVisual> root_visual{};
+        winrt::com_ptr<IDCompositionTarget> composition_target{};
         std::optional<Window>               our_window         = std::nullopt;
         std::optional<OffWindowStorage>     off_window_storage = std::nullopt;
     };

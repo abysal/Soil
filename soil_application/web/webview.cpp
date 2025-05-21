@@ -13,28 +13,32 @@
 #include <wrl.h>
 
 namespace soil {
-    WebView::WebView(const HWND dx_11_hwnd) {
-        this->hwnd = dx_11_hwnd;
-
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-        this->window = glfwCreateWindow(800, 600, "Web View", nullptr, nullptr);
-        this->hwnd   = glfwGetWin32Window(this->window);
-        glfwShowWindow(this->window);
+    WebView::WebView(
+        const HWND dx_11_hwnd, winrt::com_ptr<IDCompositionVisual> root_visual,
+        winrt::com_ptr<IDCompositionDevice> composition_device
+    ) {
+        this->hwnd               = dx_11_hwnd;
+        this->root_visual        = root_visual;
+        this->composition_device = composition_device;
 
         throw_on_fail(CreateCoreWebView2EnvironmentWithOptions(
             nullptr, nullptr, nullptr,
             Microsoft::WRL::Callback<
                 ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
-                [&](const HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
+                [&](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
                     throw_on_fail(result);
 
-                    return env->CreateCoreWebView2Controller(
+                    winrt::com_ptr<ICoreWebView2Environment3> env3;
+                    throw_on_fail(env->QueryInterface(IID_PPV_ARGS(env3.put())));
+
+                    return env3->CreateCoreWebView2CompositionController(
                         this->hwnd,
                         Microsoft::WRL::Callback<
-                            ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
-                            [&](HRESULT, ICoreWebView2Controller* controller) -> HRESULT {
-                                this->init_web_view(controller);
+                            ICoreWebView2CreateCoreWebView2CompositionControllerCompletedHandler>(
+                            [&](HRESULT                             result,
+                                ICoreWebView2CompositionController* controller) -> HRESULT {
+                                throw_on_fail(result);
+                                this->init_web_view(controller); // Your handler
                                 return S_OK;
                             }
                         ).Get()
@@ -44,29 +48,31 @@ namespace soil {
         ));
     }
 
-    void WebView::update() {
+    void WebView::update() const {
 
-        if (this->controller.get()) {
+        if (this->composition_controller) {
             RECT bounds;
-            GetClientRect(this->hwnd, &bounds);
-            this->controller->put_Bounds(bounds);
-        }
+            if (!GetClientRect(this->hwnd, &bounds)) return;
 
-        // MSG msg = {};
-        // while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-        //     TranslateMessage(&msg);
-        //     DispatchMessage(&msg);
-        // }
+            throw_on_fail(this->controller->put_Bounds(bounds));
+        }
     }
 
-    void WebView::init_web_view(ICoreWebView2Controller* controller) {
+    void WebView::init_web_view(ICoreWebView2CompositionController* controller) {
         if (!controller) {
             return;
         }
 
         controller->AddRef();
-        this->controller.attach(controller);
+        this->composition_controller.attach(controller);
+        (void)this->composition_controller->QueryInterface(IID_PPV_ARGS(this->controller.put())
+        );
         throw_on_fail(this->controller->get_CoreWebView2(this->view.put()));
+
+        throw_on_fail(this->composition_controller->put_RootVisualTarget(this->root_visual.get()
+        ));
+
+        throw_on_fail(this->composition_device->Commit());
 
         RECT bounds;
         throw_on_fail(GetClientRect(this->hwnd, &bounds));

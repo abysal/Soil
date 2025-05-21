@@ -22,6 +22,9 @@
 
 #include <RmlUi/Core.h>
 
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+
 namespace soil {
 
     void run() { Application app{}; }
@@ -65,9 +68,12 @@ namespace soil {
             Rml::Style::FontWeight::Normal, true
         );
 
-        this->dx_11 = std::make_unique<D3D11>(true);
+        this->dx_11 = std::make_unique<D3D11>(true, glfwGetWin32Window(Backend::get_window()));
 
-        this->web_view = std::make_unique<WebView>(this->dx_11->window_hwnd());
+        this->web_view = std::make_unique<WebView>(
+            this->dx_11->window_hwnd(), this->dx_11->fetch_visual_root(),
+            this->dx_11->get_dcomposition_device()
+        );
 
         this->bind_core();
 
@@ -148,6 +154,7 @@ namespace soil {
         auto provider = FsProvider::poll_user(this->context, this->settings, true);
 
         if (!provider) {
+            this->selecting_project = false;
             return;
         }
 

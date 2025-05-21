@@ -9,6 +9,7 @@
 
 #include <d3dcompiler.h>
 #pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "dcomp.lib")
 
 #include <GLFW/glfw3native.h>
 #include <WICTextureLoader.h>
@@ -42,8 +43,11 @@ namespace soil {
     // TODO: Make this actually free memory!
     D11Texture::~D11Texture() {}
 
-    D3D11::D3D11(const bool init_window) {
+    // TODO: Make this use the main windows HWND
+    // TODO: Make sure we handle reuse of components properly
+    D3D11::D3D11(const bool init_window, const HWND main_window) {
         if (init_window) {
+
             this->create_debug_window();
         } else {
             return;
@@ -57,6 +61,35 @@ namespace soil {
 
         if (this->device_context) {
             this->device_context->Release();
+        }
+    }
+
+    void D3D11::draw_active_mesh() const {
+        // Set all necessary pipeline state
+        auto*              buffer = this->our_window->active_mesh_buffer.get();
+        constexpr uint32_t stride = sizeof(Vertex);
+        constexpr uint32_t offset = 0;
+        this->device_context->IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
+
+        this->device_context->IASetIndexBuffer(
+            this->our_window->active_indices_buffer.get(), DXGI_FORMAT_R32_UINT, 0
+        );
+
+        this->device_context->IASetInputLayout(this->our_window->vertex_layout.get());
+        this->device_context->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+        this->device_context->VSSetShader(this->our_window->vertex_shader.get(), nullptr, 0);
+        this->device_context->PSSetShader(this->our_window->pixel_shader.get(), nullptr, 0);
+
+        if (const auto& texture =
+                this->texture_lookup.find(this->our_window->active_texture_handle);
+            texture.has_value()) {
+
+            auto* tp    = texture.value().get().srv.get();
+            auto* state = texture.value().get().sampler.get();
+
+            this->device_context->PSSetShaderResources(0, 1, &tp);
+            this->device_context->PSSetSamplers(0, 1, &state);
         }
     }
 
@@ -98,34 +131,9 @@ namespace soil {
             reinterpret_cast<const float*>(&bg_color)
         );
 
-        // Set all necessary pipeline state
-        auto*              buffer = this->our_window->active_mesh_buffer.get();
-        constexpr uint32_t stride = sizeof(Vertex);
-        constexpr uint32_t offset = 0;
-        this->device_context->IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
+        draw_active_mesh();
 
-        this->device_context->IASetIndexBuffer(
-            this->our_window->active_indices_buffer.get(), DXGI_FORMAT_R32_UINT, 0
-        );
-
-        this->device_context->IASetInputLayout(this->our_window->vertex_layout.get());
-        this->device_context->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-        this->device_context->VSSetShader(this->our_window->vertex_shader.get(), nullptr, 0);
-        this->device_context->PSSetShader(this->our_window->pixel_shader.get(), nullptr, 0);
-
-        if (const auto& texture =
-                this->texture_lookup.find(this->our_window->active_texture_handle);
-            texture.has_value()) {
-
-            auto* tp    = texture.value().get().srv.get();
-            auto* state = texture.value().get().sampler.get();
-
-            this->device_context->PSSetShaderResources(0, 1, &tp);
-            this->device_context->PSSetSamplers(0, 1, &state);
-        }
-
-        this->device_context->DrawIndexed(6, 0, 0);
+        // this->device_context->DrawIndexed(6, 0, 0);
 
         throw_on_fail(this->our_window->swap_chain->Present(0, 0));
     }
@@ -137,9 +145,9 @@ namespace soil {
 
         D3D11_TEXTURE2D_DESC texture_desc{};
         texture_desc.Usage              = D3D11_USAGE_DEFAULT;
-        texture_desc.BindFlags          = D3D11_BIND_SHADER_RESOURCE;
+        texture_desc.BindFlags          = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
         texture_desc.CPUAccessFlags     = 0;
-        texture_desc.MiscFlags          = 0;
+        texture_desc.MiscFlags          = D3D11_RESOURCE_MISC_SHARED;
         texture_desc.SampleDesc.Count   = 1;
         texture_desc.SampleDesc.Quality = 0;
         texture_desc.ArraySize          = 1;
@@ -205,6 +213,52 @@ namespace soil {
 
     static D3D11* our_ptr = nullptr;
 
+    void D3D11::init_direct_composition() {
+
+        DXGI_SWAP_CHAIN_DESC1 swap_chain_description = {};
+        swap_chain_description.Width                 = this->our_window->size.x;
+        swap_chain_description.Height                = this->our_window->size.y;
+        swap_chain_description.Format                = DXGI_FORMAT_B8G8R8A8_UNORM;
+        swap_chain_description.Stereo                = FALSE;
+        swap_chain_description.SampleDesc.Count      = 1;
+        swap_chain_description.SampleDesc.Quality    = 0;
+        swap_chain_description.BufferUsage           = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        swap_chain_description.BufferCount           = 2;
+        swap_chain_description.Scaling               = DXGI_SCALING_STRETCH;
+        swap_chain_description.SwapEffect            = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+        swap_chain_description.AlphaMode             = DXGI_ALPHA_MODE_PREMULTIPLIED;
+        swap_chain_description.Flags                 = 0;
+
+        throw_on_fail(this->device->QueryInterface(this->dxgi_device.put()));
+
+        winrt::com_ptr<IDXGIAdapter> adapter{};
+        throw_on_fail(dxgi_device->GetAdapter(adapter.put()));
+
+        winrt::com_ptr<IDXGIFactory2> factory{};
+        throw_on_fail(adapter->GetParent(IID_PPV_ARGS(&factory)));
+
+        throw_on_fail(factory->CreateSwapChainForComposition(
+            this->device.get(), &swap_chain_description, nullptr,
+            this->our_window->swap_chain.put()
+        ));
+
+        throw_on_fail(DCompositionCreateDevice(
+            this->dxgi_device.get(), IID_PPV_ARGS(this->dcomposition_device.put())
+        ));
+
+        throw_on_fail(this->dcomposition_device->CreateVisual(this->root_visual.put()));
+
+        throw_on_fail(this->dcomposition_device->CreateTargetForHwnd(
+            this->window_hwnd(), true, this->composition_target.put()
+        ));
+
+        throw_on_fail(this->composition_target->SetRoot(this->root_visual.get()));
+
+        throw_on_fail(this->root_visual->SetContent(this->our_window->swap_chain.get()));
+
+        throw_on_fail(this->dcomposition_device->Commit());
+    }
+
     void D3D11::create_debug_window() {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
@@ -231,51 +285,17 @@ namespace soil {
             }
         );
 
-        DXGI_MODE_DESC buffer_desc = {};
-
-        buffer_desc.Width            = this->our_window->size.x;
-        buffer_desc.Height           = this->our_window->size.y;
-        constexpr DXGI_RATIONAL rate = {
-            .Numerator = static_cast<uint32_t>(60), .Denominator = 1
-        };
-        buffer_desc.RefreshRate      = rate;
-        buffer_desc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-        buffer_desc.Scaling          = DXGI_MODE_SCALING_UNSPECIFIED;
-        buffer_desc.Format           = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-        DXGI_SWAP_CHAIN_DESC swap_chain_description = {};
-        swap_chain_description.BufferDesc           = buffer_desc;
-        swap_chain_description.SampleDesc.Count     = 1;
-        swap_chain_description.SampleDesc.Quality   = 0;
-        swap_chain_description.BufferUsage          = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        swap_chain_description.BufferCount          = 1;
-        swap_chain_description.OutputWindow = glfwGetWin32Window(this->our_window->window);
-        swap_chain_description.Windowed     = TRUE;
-        swap_chain_description.SwapEffect   = DXGI_SWAP_EFFECT_DISCARD;
-
         constexpr auto level = D3D_FEATURE_LEVEL_11_0;
 
         if (!this->device) {
             throw_on_fail(D3D11CreateDeviceAndSwapChain(
-                nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_DEBUG, &level,
-                1, D3D11_SDK_VERSION, &swap_chain_description,
-                this->our_window->swap_chain.put(), this->device.put(), nullptr,
+                nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+                &level, 1, D3D11_SDK_VERSION, nullptr, nullptr, this->device.put(), nullptr,
                 this->device_context.put()
             ));
-        } else {
-            winrt::com_ptr<IDXGIDevice> dxgi_device{};
-            throw_on_fail(this->device->QueryInterface(dxgi_device.put()));
-
-            winrt::com_ptr<IDXGIAdapter> adapter{};
-            throw_on_fail(dxgi_device->GetAdapter(adapter.put()));
-
-            winrt::com_ptr<IDXGIFactory> factory{};
-            throw_on_fail(adapter->GetParent(IID_PPV_ARGS(&factory)));
-
-            throw_on_fail(factory->CreateSwapChain(
-                this->device.get(), &swap_chain_description, this->our_window->swap_chain.put()
-            ));
         }
+
+        this->init_direct_composition();
 
         ID3D11Texture2D* back_buffer = nullptr;
 
@@ -297,15 +317,15 @@ namespace soil {
             auto& [error_blob, vertex_blob, pixel_shader, fragment_blob, vertex_shader, vertex_layout, active_mesh_buffer, active_indices_buffer, active_texture_handle] =
                 this->off_window_storage.value();
 
-            this->our_window->error_blob            = std::move(error_blob);
-            this->our_window->vertex_blob           = std::move(vertex_blob);
-            this->our_window->pixel_shader          = std::move(pixel_shader);
-            this->our_window->fragment_blob         = std::move(fragment_blob);
-            this->our_window->vertex_shader         = std::move(vertex_shader);
-            this->our_window->vertex_layout         = std::move(vertex_layout);
-            this->our_window->active_mesh_buffer    = std::move(active_mesh_buffer);
-            this->our_window->active_indices_buffer = std::move(active_indices_buffer);
-            this->our_window->active_texture_handle = std::move(active_texture_handle);
+            this->our_window->error_blob            = error_blob;
+            this->our_window->vertex_blob           = vertex_blob;
+            this->our_window->pixel_shader          = pixel_shader;
+            this->our_window->fragment_blob         = fragment_blob;
+            this->our_window->vertex_shader         = vertex_shader;
+            this->our_window->vertex_layout         = vertex_layout;
+            this->our_window->active_mesh_buffer    = active_mesh_buffer;
+            this->our_window->active_indices_buffer = active_indices_buffer;
+            this->our_window->active_texture_handle = active_texture_handle;
 
             this->off_window_storage = std::nullopt;
         }
@@ -427,10 +447,16 @@ namespace soil {
         this->our_window->render_target_view->Release();
         this->our_window->render_target_view.detach();
 
+        throw_on_fail(this->root_visual->SetContent(nullptr));
+        // throw_on_fail(this->dcomposition_device->Commit());
+
         throw_on_fail(this->our_window->swap_chain->ResizeBuffers(
-            1, static_cast<uint32_t>(this->our_window->size.x),
+            2, static_cast<uint32_t>(this->our_window->size.x),
             static_cast<uint32_t>(this->our_window->size.y), DXGI_FORMAT_UNKNOWN, 0
         ));
+
+        throw_on_fail(this->root_visual->SetContent(this->our_window->swap_chain.get()));
+        throw_on_fail(this->dcomposition_device->Commit());
 
         ID3D11Texture2D* back_buffer = nullptr;
         throw_on_fail(this->our_window->swap_chain->GetBuffer(0, IID_PPV_ARGS(&back_buffer)));
