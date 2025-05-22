@@ -73,8 +73,8 @@ bool Backend::Initialize(const char* name, int width, int height, bool allow_res
     if (!glfwInit()) return false;
 
     // Set window hints for OpenGL 3.3 Core context creation.
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
 

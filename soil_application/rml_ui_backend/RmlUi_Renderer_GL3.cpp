@@ -62,6 +62,7 @@
 #ifndef RMLUI_NUM_MSAA_SAMPLES
 #define RMLUI_NUM_MSAA_SAMPLES 2
 #endif
+#include <GLFW/glfw3.h>
 
 #define MAX_NUM_STOPS 16
 #define BLUR_SIZE 7
@@ -2198,7 +2199,7 @@ bool RmlGL3::Initialize(Rml::String* out_message) {
 #if defined RMLUI_PLATFORM_EMSCRIPTEN
     if (out_message) *out_message = "Started Emscripten WebGL renderer.";
 #elif !defined RMLUI_GL3_CUSTOM_LOADER
-    const int gl_version = gladLoaderLoadGL();
+    const int gl_version = gladLoadGL(glfwGetProcAddress);
     if (gl_version == 0) {
         if (out_message) *out_message = "Failed to initialize OpenGL context.";
         return false;
@@ -2216,6 +2217,6 @@ bool RmlGL3::Initialize(Rml::String* out_message) {
 
 void RmlGL3::Shutdown() {
 #if !defined RMLUI_PLATFORM_EMSCRIPTEN && !defined RMLUI_GL3_CUSTOM_LOADER
-    gladLoaderUnloadGL();
+    // glad();
 #endif
 }

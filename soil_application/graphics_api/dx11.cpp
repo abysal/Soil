@@ -64,6 +64,17 @@ namespace soil {
         }
     }
 
+    DXGI_FORMAT D3D11::universal_to_native(const TextureFormat start) {
+        switch (start) {
+        case TextureFormat::RGBA8:
+            return DXGI_FORMAT_R8G8B8A8_UNORM;
+        case TextureFormat::BGRA8:
+            return DXGI_FORMAT_B8G8R8A8_UNORM;
+        }
+
+        throw std::runtime_error("Unsupported texture format");
+    }
+
     void D3D11::draw_active_mesh() const {
         // Set all necessary pipeline state
         auto*              buffer = this->our_window->active_mesh_buffer.get();
@@ -144,14 +155,15 @@ namespace soil {
         winrt::com_ptr<ID3D11SamplerState>       sampler_state{};
 
         D3D11_TEXTURE2D_DESC texture_desc{};
-        texture_desc.Usage              = D3D11_USAGE_DEFAULT;
-        texture_desc.BindFlags          = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-        texture_desc.CPUAccessFlags     = 0;
-        texture_desc.MiscFlags          = D3D11_RESOURCE_MISC_SHARED;
+        texture_desc.Usage          = D3D11_USAGE_DEFAULT;
+        texture_desc.BindFlags      = D3D11_BIND_SHADER_RESOURCE;
+        texture_desc.CPUAccessFlags = 0;
+        texture_desc.MiscFlags =
+            D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
         texture_desc.SampleDesc.Count   = 1;
         texture_desc.SampleDesc.Quality = 0;
         texture_desc.ArraySize          = 1;
-        texture_desc.Format             = DXGI_FORMAT_R8G8B8A8_UNORM;
+        texture_desc.Format             = DXGI_FORMAT_B8G8R8A8_UNORM;
         texture_desc.Width              = texture.width;
         texture_desc.Height             = texture.height;
         texture_desc.MipLevels          = 1;
@@ -161,8 +173,20 @@ namespace soil {
         texture_data.pSysMem     = texture.data;
 
         throw_on_fail(
-            this->device->CreateTexture2D(&texture_desc, &texture_data, texture_resource.put())
+            this->device->CreateTexture2D(&texture_desc, nullptr, texture_resource.put())
         );
+
+        const auto row_pitch = texture.width * texture.bytes_per_pixel();
+
+        this->device_context->UpdateSubresource(
+            texture_resource.get(), // destination resource
+            0,                      // subresource index (0 for most 2D textures)
+            nullptr,                // box to update (nullptr = entire resource)
+            texture.data,           // pointer to source data in system memory
+            row_pitch,              // pitch (bytes per row)
+            0                       // slice pitch (0 for 2D textures)
+        );
+        this->device_context->Flush();
 
         D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
         srv_desc.Format                          = texture_desc.Format;

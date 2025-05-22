@@ -9,7 +9,7 @@
 #include <winrt/base.h>
 
 namespace soil {
-    enum class TextureFormat { RGBA8 };
+    enum class TextureFormat { RGBA8, BGRA8 };
 
     template <typename T1, typename T2, typename T = std::common_type_t<T1, T2>>
     T lerp(const T1& a, const T2& b, float t) {

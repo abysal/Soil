@@ -5,13 +5,13 @@
 #include "graphics_api/dx11.hpp"
 #include "graphics_api/dx12.hpp"
 #include "graphics_api/ogl.hpp"
+#include "graphics_api/open_dx_11.hpp"
 #include "process_queue/process_queue.hpp"
 #include "rml_extra/ogl_instancer.hpp"
 #include "settings.hpp"
 #include "shim/fs_shim.hpp"
 #include "side_bar/side_bar.hpp"
 #include "web/webview.hpp"
-
 #include <RmlUi/Core.h>
 #include <RmlUi/Core/Context.h>
 #include <RmlUi/Core/DataModelHandle.h>
@@ -39,6 +39,7 @@ namespace soil {
         }
 
     private:
+        void direct_x11();
         void init();
 
         void bind_core();
@@ -73,6 +74,7 @@ namespace soil {
         SideBar                           side_bar          = {};
         std::unique_ptr<D3D12>            dx_12             = {};
         std::unique_ptr<D3D11>            dx_11             = {};
+        std::unique_ptr<OpenDx11>         ogl_dx11          = {};
         OGL                               open_gl           = {};
         std::unique_ptr<OglInstancer>     instancer         = {};
         std::unique_ptr<WebView>          web_view          = {};

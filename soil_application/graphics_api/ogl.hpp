@@ -4,6 +4,41 @@
 
 #include <glm/vec2.hpp>
 
+#define GLCall(func)                                                                           \
+    do {                                                                                       \
+        func;                                                                                  \
+        GLenum err;                                                                            \
+        while ((err = glGetError()) != GL_NO_ERROR) {                                          \
+            const char* error = "Unknown error";                                               \
+            switch (err) {                                                                     \
+            case GL_INVALID_ENUM:                                                              \
+                error = "GL_INVALID_ENUM";                                                     \
+                break;                                                                         \
+            case GL_INVALID_VALUE:                                                             \
+                error = "GL_INVALID_VALUE";                                                    \
+                break;                                                                         \
+            case GL_INVALID_OPERATION:                                                         \
+                error = "GL_INVALID_OPERATION";                                                \
+                break;                                                                         \
+            case GL_STACK_OVERFLOW:                                                            \
+                error = "GL_STACK_OVERFLOW";                                                   \
+                break;                                                                         \
+            case GL_STACK_UNDERFLOW:                                                           \
+                error = "GL_STACK_UNDERFLOW";                                                  \
+                break;                                                                         \
+            case GL_OUT_OF_MEMORY:                                                             \
+                error = "GL_OUT_OF_MEMORY";                                                    \
+                break;                                                                         \
+            case GL_INVALID_FRAMEBUFFER_OPERATION:                                             \
+                error = "GL_INVALID_FRAMEBUFFER_OPERATION";                                    \
+                break;                                                                         \
+            }                                                                                  \
+            Rml::Log::Message(                                                                 \
+                Rml::Log::LT_ERROR, "[OpenGL Error] %s (0x%X) after calling %s at %s:%d\n",    \
+                error, err, #func, __FILE__, __LINE__                                          \
+            );                                                                                 \
+        }                                                                                      \
+    } while (0)
 namespace soil {
 
     struct OglTexture : BaseTexture {
@@ -58,6 +93,7 @@ namespace soil {
         static glm::vec2 to_ndc(const glm::vec2 position);
 
     public:
+        friend class OpenDx11;
         OglTextureLookup lookup{};
     };
 } // namespace soil

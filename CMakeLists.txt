@@ -20,7 +20,8 @@ set(SOURCE_FILES
         soil_application/graphics_api/ogl.cpp
         soil_application/graphics_api/ogl.hpp
         soil_application/rml_extra/ogl_instancer.cpp
-        soil_application/rml_extra/ogl_instancer.hpp)
+        soil_application/rml_extra/ogl_instancer.hpp
+        soil_application/graphics_api/open_dx_11.cpp)
 
 file(GLOB_RECURSE SOURCE_FILES_REST CONFIGURE_DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/soil_application/*.hpp

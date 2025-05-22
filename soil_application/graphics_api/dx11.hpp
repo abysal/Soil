@@ -102,6 +102,8 @@ namespace soil {
             return composition_target;
         }
 
+        static DXGI_FORMAT universal_to_native(const TextureFormat start);
+
     public:
         D11TextureLookup texture_lookup{};
 
@@ -190,6 +192,8 @@ namespace soil {
         winrt::com_ptr<IDCompositionTarget> composition_target{};
         std::optional<Window>               our_window         = std::nullopt;
         std::optional<OffWindowStorage>     off_window_storage = std::nullopt;
+
+        friend class OpenDx11;
     };
 
 } // namespace soil

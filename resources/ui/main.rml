@@ -27,6 +27,7 @@
 
     </div>
 
+    <opengl texture="debug_dx11"></opengl>
     <opengl texture="debug"></opengl>
 
     </body>

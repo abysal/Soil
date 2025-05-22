@@ -29,6 +29,17 @@ namespace soil {
 
     void run() { Application app{}; }
 
+    void Application::direct_x11() {
+        this->dx_11 = std::make_unique<D3D11>(true, glfwGetWin32Window(Backend::get_window()));
+
+        this->ogl_dx11 = std::make_unique<OpenDx11>(this->dx_11.get(), &this->open_gl);
+
+        this->web_view = std::make_unique<WebView>(
+            this->dx_11->window_hwnd(), this->dx_11->fetch_visual_root(),
+            this->dx_11->get_dcomposition_device()
+        );
+    }
+
     void Application::init() {
         std::println("Starting Soil!");
 
@@ -68,12 +79,7 @@ namespace soil {
             Rml::Style::FontWeight::Normal, true
         );
 
-        this->dx_11 = std::make_unique<D3D11>(true, glfwGetWin32Window(Backend::get_window()));
-
-        this->web_view = std::make_unique<WebView>(
-            this->dx_11->window_hwnd(), this->dx_11->fetch_visual_root(),
-            this->dx_11->get_dcomposition_device()
-        );
+        direct_x11();
 
         this->bind_core();
 
@@ -127,11 +133,20 @@ namespace soil {
         );
 
         if (this->dx_11) {
+
+            const auto texture_name = "debug_dx11";
+
+            const auto dbg_handle = D11TextureHandle(texture_name);
+
             this->dx_11->upload_texture_from_cpu(
-                gradient(300, 300, {20, 30, 1, 255}, {200, 1, 255, 255}), "debug"
+                gradient(300, 300, {177, 1, 254, 255}, {33, 51, 25, 255}), texture_name
             );
 
-            this->dx_11->set_as_render_texture(D11TextureHandle("debug"));
+            this->dx_11->set_as_render_texture(dbg_handle);
+
+            this->open_gl.lookup.upload_texture(
+                OglTextureHandle(texture_name), this->ogl_dx11->bind(dbg_handle).value()
+            );
         }
 
         this->setup_listeners();
