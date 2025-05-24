@@ -158,6 +158,8 @@ namespace bsp {
             return value;
         } catch (std::out_of_range& e) {
             throw JsonRPCValidationError("Method not found", -32601);
+        } catch (const JsonRPCValidationError& error) {
+            throw error; // Just a simple passthrough to note that we handle it
         }
     }
 
