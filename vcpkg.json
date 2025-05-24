@@ -13,6 +13,7 @@
     "glm",
     "directxtk",
     "bshoshany-thread-pool",
-    "eventpp"
+    "eventpp",
+    "hjson-cpp"
   ]
 }

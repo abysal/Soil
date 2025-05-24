@@ -42,6 +42,7 @@ target_include_directories(Soil PUBLIC resources)
 target_include_directories(Soil PUBLIC soil_application)
 target_compile_definitions(Soil PUBLIC NOMINMAX)
 
+add_subdirectory(bedrock_lsp)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(Soil PRIVATE
